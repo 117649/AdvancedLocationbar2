@@ -1,0 +1,85 @@
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
+
+#urlbar {
+  -moz-binding: url(chrome://advancedlocationbar/content/urlbar.xml#urlbar) !important;
+}
+
+.textbox-presentation-box > * ,
+.textbox-presentation-segment ,
+.textbox-presentation-segment > * {
+  margin: 0;
+  padding: 0;
+}
+
+.textbox-overflow-ellipsis ,
+.textbox-presentation-box {
+  -moz-margin-start: 1px;
+}
+
+.textbox-presentation-box ,
+.textbox-presentation-segment ,
+.textbox-presentation-slash {
+  cursor: text;
+}
+
+.textbox-presentation-segment {
+  -moz-binding: url(chrome://advancedlocationbar/content/urlbar.xml#segment) !important;
+}
+
+.textbox-presentation-path {
+  -moz-binding: url(chrome://advancedlocationbar/content/urlbar.xml#single-segment) !important;
+}
+
+.textbox-presentation-pathFile {
+  -moz-binding: url(chrome://advancedlocationbar/content/urlbar.xml#file-segment) !important;
+}
+
+.textbox-presentation-prePathSub > .textbox-presentation-slash,
+.textbox-presentation-prePath.hide-trailing-slash > .textbox-presentation-slash,
+.textbox-presentation-prePathSub.hide-protocol > .textbox-presentation-protocol {
+  display: none;
+}
+
+.textbox-presentation-protocol ,
+.textbox-presentation-port ,
+.textbox-presentation-slash {
+  text-decoration: none !important;
+}
+
+.textbox-presentation-protocol,
+.textbox-presentation-subdomain,
+.textbox-presentation-prePath .textbox-presentation-slash,
+.textbox-presentation-port,
+.textbox-presentation-path,
+.textbox-presentation-file,
+.textbox-presentation-query,
+.textbox-presentation-fragment {
+  opacity: 0.5;
+}
+
+.no-format-on-hover:hover .textbox-presentation-protocol,
+.no-format-on-hover:hover .textbox-presentation-subdomain,
+.no-format-on-hover:hover .textbox-presentation-prePath .textbox-presentation-slash,
+.no-format-on-hover:hover .textbox-presentation-port,
+.no-format-on-hover:hover .textbox-presentation-path,
+.no-format-on-hover:hover .textbox-presentation-file,
+.no-format-on-hover:hover .textbox-presentation-query,
+.no-format-on-hover:hover .textbox-presentation-fragment {
+  opacity: 1.0;
+}
+
+.no-host > .textbox-presentation-prePathSub > .textbox-presentation-protocol,
+.no-host > .textbox-presentation-path,
+.no-host > .textbox-presentation-pathFile > .textbox-presentation-file {
+  opacity: 1.0;
+}
+
+#urlbar[linkify="true"] .textbox-presentation-segment > :not(.textbox-presentation-slash) {
+  cursor: pointer;
+}
+
+#urlbar[linkify="true"] .textbox-presentation-segment:hover > *,
+#urlbar[linkify="true"] .textbox-presentation-prePathSub:hover + .textbox-presentation-prePath > * {
+  text-decoration: underline;
+}

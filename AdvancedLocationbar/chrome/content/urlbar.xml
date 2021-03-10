@@ -1,0 +1,629 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<bindings xmlns="http://www.mozilla.org/xbl"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+          xmlns:xbl="http://www.mozilla.org/xbl">
+
+  <binding id="urlbar" extends="chrome://browser/content/urlbarBindings.xml#urlbar">
+    <content sizetopopup="pref">
+      <xul:hbox class="autocomplete-textbox-container urlbar-textbox-container" flex="1">
+<!-- fission: -->
+        <xul:stack flex="1">
+          <children includes="progressmeter"/>
+          <xul:hbox class="autocomplete-textbox-container-fission">
+<!-- /fission -->
+        <xul:hbox class="textbox-icon-box"
+                  onmouseover="gURLBar._enterLinkifyMode();">
+          <children includes="image|deck|stack|box">
+            <xul:image class="autocomplete-icon" allowevents="true"/>
+          </children>
+        </xul:hbox>
+
+        <xul:stack flex="1" anonid="textbox-input-box" class="textbox-input-box urlbar-input-box">
+          <xul:hbox anonid="textbox-input-box-inner" xbl:inherits="tooltiptext=inputtooltiptext"
+                    flex="1" align="center">
+            <children/>
+            <html:input anonid="input" class="autocomplete-textbox urlbar-input textbox-input uri-element-right-align"
+                        flex="1" allowevents="true"
+                        xbl:inherits="tooltiptext=inputtooltiptext,onfocus,onblur,value,type,maxlength,disabled,size,readonly,placeholder,userAction"/>
+          </xul:hbox>
+          <xul:hbox anonid="presentation-box" class="textbox-presentation-box"
+                    flex="1" align="center"
+                    onmousedown="gURLBar.focus();"
+                    ondragover="nsDragAndDrop.dragOver(event, gURLBar);"
+                    ondrop="nsDragAndDrop.drop(event, gURLBar);"
+                    ondragexit="nsDragAndDrop.dragExit(event, gURLBar);">
+            <xul:scrollbox anonid="presentation" class="textbox-presentation" flex="1">
+              <xul:hbox anonid="prePathSub" class="textbox-presentation-segment textbox-presentation-prePathSub">
+                <xul:label anonid="protocol" class="textbox-presentation-protocol"/>
+                <xul:label anonid="subdomain" class="textbox-presentation-subdomain"/>
+              </xul:hbox>
+              <xul:hbox anonid="prePath" class="textbox-presentation-segment textbox-presentation-prePath">
+                <xul:label anonid="domain" class="textbox-presentation-domain"/>
+                <xul:label anonid="port" class="textbox-presentation-port"/>
+              </xul:hbox>
+              <xul:hbox anonid="pathFile" class="textbox-presentation-segment textbox-presentation-pathFile">
+                <xul:label anonid="file" class="textbox-presentation-file"/>
+              </xul:hbox>
+              <xul:hbox anonid="pathFileQ" class="textbox-presentation-segment textbox-presentation-pathFile">
+                <xul:label anonid="query" class="textbox-presentation-query"/>
+              </xul:hbox>
+              <xul:hbox anonid="pathFileF" class="textbox-presentation-segment textbox-presentation-pathFile">
+                <xul:label anonid="fragment" class="textbox-presentation-fragment"/>
+              </xul:hbox>
+            </xul:scrollbox>
+            <xul:label anonid="overflow-ellipsis" class="textbox-overflow-ellipsis" hidden="true"/>
+          </xul:hbox>
+        </xul:stack>
+
+        <children includes="hbox"/>
+<!-- fission: -->
+          </xul:hbox>
+        </xul:stack>
+<!-- /fission -->
+      </xul:hbox>
+
+      <xul:dropmarker anonid="historydropmarker"
+                      class="autocomplete-history-dropmarker urlbar-history-dropmarker"
+                      allowevents="true"
+                      xbl:inherits="open,enablehistory,parentfocused=focused"/>
+
+      <children includes="toolbarbutton"/>
+
+      <xul:popupset anonid="popupset" class="autocomplete-result-popupset"/>
+    </content>
+
+    <implementation implements="nsIObserver, nsIDOMEventListener">
+
+      <constructor><![CDATA[
+        try {
+          this.overflowEllipsis.value =
+            Components.classes["@mozilla.org/preferences-service;1"]
+                      .getService(Components.interfaces.nsIPrefBranch)
+                      .getComplexValue("intl.ellipsis",
+                                       Components.interfaces.nsIPrefLocalizedString)
+                      .data;
+        } catch (ex) {
+          this.overflowEllipsis.value = "\u2026";
+        }
+
+        this._prefsext = Components.classes["@mozilla.org/preferences-service;1"]
+                                .getService(Components.interfaces.nsIPrefService)
+                                .getBranch("extensions.advancedlocationbar.");
+
+        this._prefsext.addObserver("", this, false);
+
+        // Focus hack, I haven't investigated why it's needed
+        let self = this;
+        this.inputField.addEventListener("focus", function() {
+          if (!self._justFocusedFromPretty)
+            return;
+          self._justFocusedFromPretty = false;
+          setTimeout(function() {
+            self.inputField.focus();
+          });
+        }, false);
+
+        this.inputBoxInner.focus = function () {
+          self.inputField.focus();
+        };
+
+        this.plain = true;
+      ]]></constructor>
+
+      <field name="copy_unescaped">
+        this._prefsext.getBoolPref("copy_unescaped")
+      </field>
+      <field name="linkify_on_keys">
+        this._prefsext.getBoolPref("linkify_on_keys")
+      </field>
+      <field name="linkify_on_mouse_icon">
+        this._prefsext.getBoolPref("linkify_on_mouse_icon")
+      </field>
+      <field name="linkify_on_mouse_top">
+        this._prefsext.getBoolPref("linkify_on_mouse_top")
+      </field>
+      <field name="linkify_on_mouse_bottom">
+        this._prefsext.getBoolPref("linkify_on_mouse_bottom")
+      </field>
+      <field name="uri"/>
+      <field name="_focused"/>
+      <field name="_justFocusedFromPretty"/>
+      <field name="_mouseover"/>
+      <field name="_iconWasHovered"/>
+      <field name="_iconWasHoveredOutTime"/>
+      <field name="pathSegmentProto">
+        var node = document.createElement("label");
+        node.className = "textbox-presentation-segment textbox-presentation-path";
+        node;
+      </field>
+      <field name="inputBox">
+        document.getAnonymousElementByAttribute(this, "anonid", "textbox-input-box");
+      </field>
+      <field name="inputBoxInner">
+        document.getAnonymousElementByAttribute(this, "anonid", "textbox-input-box-inner");
+      </field>
+      <field name="presentationBox">
+        document.getAnonymousElementByAttribute(this, "anonid", "presentation-box");
+      </field>
+      <field name="presentation">
+        document.getAnonymousElementByAttribute(this, "anonid", "presentation");
+      </field>
+      <field name="overflowEllipsis">
+        document.getAnonymousElementByAttribute(this, "anonid", "overflow-ellipsis");
+      </field>
+      <field name="prePathSubNode">
+        document.getAnonymousElementByAttribute(this, "anonid", "prePathSub");
+      </field>
+      <field name="prePathNode">
+        document.getAnonymousElementByAttribute(this, "anonid", "prePath");
+      </field>
+      <field name="protocolNode">
+        document.getAnonymousElementByAttribute(this, "anonid", "protocol");
+      </field>
+      <field name="subDomainNode">
+        document.getAnonymousElementByAttribute(this, "anonid", "subdomain");
+      </field>
+      <field name="domainNode">
+        document.getAnonymousElementByAttribute(this, "anonid", "domain");
+      </field>
+      <field name="portNode">
+        document.getAnonymousElementByAttribute(this, "anonid", "port");
+      </field>
+      <field name="pathFileNode">
+        document.getAnonymousElementByAttribute(this, "anonid", "pathFile");
+      </field>
+      <field name="pathFileNodeQ">
+        document.getAnonymousElementByAttribute(this, "anonid", "pathFileQ");
+      </field>
+      <field name="pathFileNodeF">
+        document.getAnonymousElementByAttribute(this, "anonid", "pathFileF");
+      </field>
+      <field name="fileNode">
+        document.getAnonymousElementByAttribute(this, "anonid", "file");
+      </field>
+      <field name="queryNode">
+        document.getAnonymousElementByAttribute(this, "anonid", "query");
+      </field>
+      <field name="fragmentNode">
+        document.getAnonymousElementByAttribute(this, "anonid", "fragment");
+      </field>
+      <field name="_tldService" readonly="true"><![CDATA[
+        Components.classes["@mozilla.org/network/effective-tld-service;1"]
+                  .getService(Components.interfaces.nsIEffectiveTLDService);
+      ]]></field>
+      <field name="_idnService" readonly="true"><![CDATA[
+        Components.classes["@mozilla.org/network/idn-service;1"]
+                 .getService(Components.interfaces.nsIIDNService);
+      ]]></field>
+      <field name="_ioService" readonly="true">
+        Components.classes["@mozilla.org/network/io-service;1"]
+                  .getService(Components.interfaces.nsIIOService);
+      </field>
+
+      <field name="_plain">true</field>
+      <property name="plain" onget="return this._plain">
+        <setter><![CDATA[
+          this._plain = val;
+          if (val) {
+            this.inputBoxInner.style.removeProperty("opacity");
+            this.presentationBox.hidden = true;
+          } else
+            this.inputBoxInner.style.setProperty("opacity", "0", "important");
+          this.presentationBox.style.removeProperty("opacity");
+          this._hideURLTooltip();
+          return val;
+        ]]></setter>
+      </property>
+
+      <property name="_formattingEnabled"
+                onget="return !this.presentationBox.classList.contains('no-format-on-hover');"
+                onset="if (val) this.presentationBox.classList.remove('no-format-on-hover'); else this.presentationBox.classList.add('no-format-on-hover'); return val;" />
+
+      <property name="_contentIsCropped"
+                onget="return !this.overflowEllipsis.hidden;"
+                onset="this.overflowEllipsis.hidden = !val; return val;"/>
+
+      <property name="value">
+        <getter><![CDATA[
+          if (typeof this.onBeforeValueGet == "function") {
+            var result = this.onBeforeValueGet();
+            if (result)
+              return result.value;
+          }
+          return (this.hasAttribute('isempty') || this.hasAttribute('empty')) ? '' : this.inputField.value;
+        ]]></getter>
+        <setter><![CDATA[
+          this.mIgnoreInput = true;
+
+          if (typeof this.onBeforeValueSet == "function")
+            val = this.onBeforeValueSet(val);
+
+          if (typeof this.trimValue == "function" && this._mayTrimURLs)
+            val = this.trimValue(val);
+          this.valueIsTyped = false;
+
+          if (!this.inputField.value) {
+            this._contentIsCropped = false;
+          }
+
+          if (val) {
+            // clear the emptyText _before_ setting a new non-empty value
+            if (this._clearEmptyText)
+              this._clearEmptyText();
+            this.inputField.value = val;
+          } else {
+            // display the emptyText _after_ setting a value that's an empty string
+            this.inputField.value = val;
+            if (this._updateVisibleText)
+              this._updateVisibleText();
+          }
+          this.mIgnoreInput = false;
+          this._syncValue();
+          if (this._focused)
+            this.plain = true;
+          else if (!this._mouseover || !this.plain)
+            this.prettyView();
+          var event = document.createEvent("Events");
+          event.initEvent("ValueChange", true, true);
+          this.inputField.dispatchEvent(event);
+          return val;
+        ]]></setter>
+      </property>
+
+      <method name="_syncValue">
+        <body><![CDATA[
+          var missingProtocol = false;
+          if (this.value == "")
+            this.uri = null;
+          else try {
+            var val = this.value;
+            if (this._mayTrimURLs && !/^[a-z]*:/.test(this.value)) {
+              val = "http://" + val;
+              missingProtocol = true;
+            }
+            var uri = this._ioService.newURI(val, null, null);
+            this.uri = (typeof uri.host != "undefined") ? uri : null;
+          } catch(e) {
+            this.uri = null;
+            missingProtocol = false;
+          }
+          if (!this.uri) {
+            this._contentIsCropped = false;
+            return;
+          }
+
+          var presentation = this.presentation;
+          var prePathSubNode = this.prePathSubNode;
+          var prePathNode = this.prePathNode;
+
+          prePathSubNode.href = prePathNode.href =
+            this.protocolNode.value = (missingProtocol ? "" : this.uri.scheme + "://");
+          this.subDomainNode.value = "";
+          this.portNode.value = "";
+
+          var host = this.uri.host;
+          if (host) {
+            try {
+              let baseDomainAscii = this._tldService.getBaseDomainFromHost(host);
+              let baseDomain = this._idnService.convertToDisplayIDN(baseDomainAscii, {});
+              let hostInSameForm = (this._idnService.isACE(baseDomain)) ? this._idnService.convertUTF8toACE(host) : host;
+              if (hostInSameForm.lastIndexOf(baseDomain) !== -1) {
+                this.subDomainNode.value = hostInSameForm.substring(0, hostInSameForm.lastIndexOf(baseDomain));
+                host = baseDomain;
+              }
+              prePathNode.href += baseDomainAscii;
+            } catch (e)
+            {
+              prePathNode.href += this.uri.asciiHost;
+            }
+            prePathSubNode.href += this.uri.asciiHost;
+            this.domainNode.value = host;
+            if (this.uri.port > -1)
+            {
+              prePathSubNode.href += (this.portNode.value = ":" + this.uri.port);
+              prePathNode.href += (this.portNode.value = ":" + this.uri.port);
+            }
+            this.presentation.classList.remove("no-host");
+          } else {
+            this.domainNode.value = "";
+            this.presentation.classList.add("no-host");
+          }
+          prePathSubNode.href += "/";
+          prePathNode.href += "/";
+          var href = prePathSubNode.href;
+          var baseHref = href;
+
+          while (prePathNode.nextSibling != this.pathFileNode)
+            presentation.removeChild(prePathNode.nextSibling);
+
+          var pathSegments = losslessDecodeURI(this.uri).replace(/^[^:]*:\/\/[^\/]*\//, "");
+
+          var iFragment = pathSegments.indexOf("#");
+          if (iFragment > -1) {
+            this.fragmentNode.value = pathSegments.substring(iFragment);
+            pathSegments = pathSegments.substring(0, iFragment);
+          } else
+            this.fragmentNode.value = "";
+
+          var iQuery = pathSegments.indexOf("?");
+          if (iQuery > -1) {
+            this.queryNode.value = pathSegments.substring(iQuery);
+            pathSegments = pathSegments.substring(0, iQuery);
+          } else
+            this.queryNode.value = "";
+
+          pathSegments = pathSegments.split("/");
+          this.fileNode.value = pathSegments.pop();
+
+          for (var i = 0; i < pathSegments.length; i++) {
+            var node = this.pathSegmentProto.cloneNode(true);
+            node.value = pathSegments[i];
+            node.href = (href += pathSegments[i] + "/");
+            presentation.insertBefore(node, this.pathFileNode);
+          }
+          this.pathFileNode.href = (href += this.fileNode.value);
+          this.pathFileNodeQ.href = (href += this.queryNode.value);
+          this.pathFileNodeF.href = (href += this.fragmentNode.value);
+
+          if (href == baseHref && href.slice(-1) == "/" && this._mayTrimURLs)
+            this.prePathNode.classList.add("hide-trailing-slash");
+          else
+            this.prePathNode.classList.remove("hide-trailing-slash");
+
+          if (!/^[a-z]*:/.test(this.textValue) && this._mayTrimURLs)
+            this.prePathSubNode.classList.add("hide-protocol");
+          else
+            this.prePathSubNode.classList.remove("hide-protocol");
+
+        ]]></body>
+      </method>
+
+      <method name="_prettyView">
+        <body><![CDATA[
+          this._plain = false;
+          this.protocolNode.hidden = false;
+          this.presentationBox.hidden = false;
+          this.subDomainNode.style.removeProperty("-moz-margin-start");
+          this.portNode.style.removeProperty("-moz-margin-end");
+        ]]></body>
+      </method>
+
+      <method name="prettyView">
+        <body><![CDATA[
+          if (this.uri) {
+            this._prettyView();
+            this.plain = false;
+          } else {
+            this.plain = true;
+          }
+        ]]></body>
+      </method>
+
+      <method name="handleEvent">
+        <parameter name="aEvent"/>
+        <body><![CDATA[
+          switch (aEvent.type) {
+            case "keydown":
+              if (this.plain && this._mouseover && !this._focused) {
+                switch (aEvent.keyCode) {
+                  case KeyEvent.DOM_VK_SHIFT:
+                  case KeyEvent.DOM_VK_CONTROL:
+                  case KeyEvent.DOM_VK_META:
+                  case KeyEvent.DOM_VK_ALT:
+                    this.prettyView();
+                    this.setAttribute("linkify", "true");
+                }
+              }
+              break;
+          }
+          this.__proto__.__proto__.handleEvent.call(this, aEvent);
+        ]]></body>
+      </method>
+
+      <method name="observe">
+        <parameter name="subject"/>
+        <parameter name="topic"/>
+        <parameter name="data"/>
+        <body><![CDATA[
+          if (topic == "nsPref:changed") {
+            switch(data) {
+              case "copy_unescaped":
+              case "linkify_on_keys":
+              case "linkify_on_mouse_icon":
+              case "linkify_on_mouse_top":
+              case "linkify_on_mouse_bottom":
+                this[data] = this._prefsext.getBoolPref(data);
+                break;
+            }
+          }
+          this.__proto__.__proto__.observe.call(this, subject, topic, data);
+        ]]></body>
+      </method>
+
+      <method name="_getSelectedValueForClipboard">
+        <body><![CDATA[
+          var urlstr = this.__proto__.__proto__._getSelectedValueForClipboard.call(this);
+          if (this.copy_unescaped && !this.valueIsTyped && this.selectionStart == 0 && this.selectionEnd == this.inputField.value.length) {
+            try {
+              return losslessDecodeURI(makeURI(urlstr)).replace(/[()"\s]/g, escape); // escape() doesn't encode @*_+-./
+            } catch (e) {
+              return urlstr;
+            }
+          }
+          else
+          {
+            return urlstr;
+          }
+        ]]></body>
+      </method>
+
+      <method name="_enterLinkifyMode">
+        <body><![CDATA[
+
+          var elthis = this;
+          if (!elthis.linkify_on_mouse_icon || elthis._iconWasHovered) return;
+          elthis._iconWasHovered = true;
+          elthis._iconWasHoveredOutTime = (new Date).getTime();
+
+          var onmove = function (e) {
+            var elrect = elthis.getBoundingClientRect();
+            if (!elthis.linkify_on_mouse_icon
+              || ((elrect.top - 15) > e.clientY || e.clientY > (elrect.bottom + 15))
+              || (elrect.top > e.clientY || e.clientY > elrect.bottom) && elthis._iconWasHoveredOutTime + 2500 < (new Date).getTime())
+            {
+              elthis._iconWasHovered = false;
+              elthis._iconWasHoveredOutTime = 0;
+              window.removeEventListener("mousemove", onmove, false);
+            }
+            else
+            {
+              elthis._iconWasHoveredOutTime = (new Date).getTime();
+            }
+          };
+
+          window.addEventListener("mousemove", onmove, false);
+
+        ]]></body>
+      </method>
+
+    </implementation>
+
+    <handlers>
+      <handler event="input"
+               action="this._syncValue();"/>
+
+      <handler event="mouseover"><![CDATA[
+        if (this._mouseover)
+          return;
+        if (!this.plain) {
+          var bO = this.inputBox.boxObject;
+          if (event.screenX < bO.screenX || event.screenX > bO.screenX + bO.width)
+            return;
+        }
+        this._mouseover = true;
+        var bO = this.boxObject;
+        if (this.linkify_on_mouse_icon && this._iconWasHovered || this.linkify_on_keys && (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) ||
+            this.linkify_on_mouse_top && event.screenY < bO.screenY + bO.height / 4 ||
+            this.linkify_on_mouse_bottom && event.screenY >= bO.screenY + bO.height / 4)
+          this.setAttribute("linkify", "true");
+        else
+          setTimeout (function (self) {
+            if (self._mouseover && self.getAttribute("linkify") != "true") {
+              self.formatValue();
+              self.plain = true;
+              document.addEventListener("keydown", self, false);
+            }
+          }, 50, this);
+      ]]></handler>
+
+      <handler event="mouseout"><![CDATA[
+        for (var node = event.relatedTarget; node; node = node.parentNode)
+          if (node == this)
+            return;
+        this.removeAttribute("linkify");
+        this._mouseover = false;
+        if (!this._focused && this.plain) {
+          this.prettyView();
+          document.removeEventListener("keydown", this, false);
+        } else
+          this._hideURLTooltip();
+      ]]></handler>
+
+      <handler event="focus" phase="capturing"><![CDATA[
+        if (!this._focused && event.originalTarget == this.inputField) {
+          this._focused = true;
+          this._justFocusedFromPretty = true;
+          if (!this.plain)
+            this.plain = true;
+        }
+      ]]></handler>
+
+      <handler event="blur" phase="capturing"><![CDATA[
+        if (this._focused && event.originalTarget == this.inputField) {
+          this._focused = false;
+          this._syncValue();
+          if (!this._mouseover)
+            this.prettyView();
+        }
+      ]]></handler>
+    </handlers>
+
+  </binding>
+
+  <binding id="single-segment" display="xul:hbox" extends="chrome://advancedlocationbar/content/urlbar.xml#segment">
+    <content>
+      <xul:label class="textbox-presentation-segment-label" anonid="label"/>
+      <xul:label class="textbox-presentation-slash" value="/"/>
+    </content>
+
+    <implementation>
+      <property name="value" onget="return this.getAttribute('value');">
+        <setter><![CDATA[
+          this.setAttribute("value", val);
+          document.getAnonymousElementByAttribute(this, "anonid", "label").value = val;
+          return val;
+        ]]></setter>
+      </property>
+    </implementation>
+  </binding>
+
+  <binding id="file-segment" extends="chrome://advancedlocationbar/content/urlbar.xml#segment">
+    <content>
+      <children/>
+    </content>
+  </binding>
+
+  <binding id="segment">
+    <content>
+      <children/>
+      <xul:label class="textbox-presentation-slash" value="/"/>
+    </content>
+
+    <implementation>
+      <field name="href"/>
+    </implementation>
+
+    <handlers>
+      <handler event="click"><![CDATA[
+        if (event.button != 2 &&
+            event.originalTarget != this &&
+            event.originalTarget.className != "textbox-presentation-slash" &&
+            gURLBar.getAttribute("linkify") == "true") {
+          if ("TreeStyleTabService" in window)
+              TreeStyleTabService.readyToOpenChildTab(gBrowser.selectedTab);
+          openUILinkIn(this.href, whereToOpenLink(event, false, true),
+                       { relatedToCurrent: true });
+          if ("TreeStyleTabService" in window) // We should reset, if was opened not tab
+              TreeStyleTabService.stopToOpenChildTab(gBrowser.selectedTab);
+          event.stopPropagation();
+          event.preventDefault();
+        }
+      ]]></handler>
+
+      <handler event="mousedown"><![CDATA[
+        if (event.button != 2 &&
+            event.originalTarget != this &&
+            event.originalTarget.className != "textbox-presentation-slash")
+          event.stopPropagation();
+      ]]></handler>
+
+      <handler event="mouseout"><![CDATA[
+        for (var node = event.relatedTarget; node; node = node.parentNode)
+          if (node == this)
+            return;
+        gURLBar._hideURLTooltip();
+      ]]></handler>
+
+      <handler event="mousemove"><![CDATA[
+        if (event.originalTarget != this &&
+            event.originalTarget.className != "textbox-presentation-slash")
+          gURLBar._initURLTooltip(this.href);
+        else
+          gURLBar._hideURLTooltip();
+      ]]></handler>
+    </handlers>
+
+  </binding>
+</bindings>

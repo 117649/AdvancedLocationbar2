@@ -1,0 +1,13 @@
+<!ENTITY copy_unescaped.label			"Копировать URL в незакодированном виде">
+<!ENTITY trim_urls.label				"Скрывать префикс http:// из URL">
+<!ENTITY click_selects_all.label		"При клике выделять всё">
+<!ENTITY double_click_selects_all.label	"Двойным кликом выделять всё">
+<!ENTITY enable_formatting.label		"Оставлять подсветку при наведении">
+<!ENTITY linkify_on_keys.label			"Ссылки при Ctrl/Alt/Shift">
+<!ENTITY linkify_on_keys.desc			"Нажатие Ctrl/Alt/Shift позволяет кликать по сегментам URL как по ссылкам.">
+<!ENTITY linkify_on_mouse_icon.label	"Ссылки при курсоре от иконки">
+<!ENTITY linkify_on_mouse_icon.desc		"Перемещение курсора над иконкой URL позволяет кликать по сегментам URL как по ссылкам.">
+<!ENTITY linkify_on_mouse_top.label		"Ссылки при курсоре сверху">
+<!ENTITY linkify_on_mouse_top.desc		"Преобразовывать сегменты URL в ссылки если курсор мыши попал в адресную строку сверху.">
+<!ENTITY linkify_on_mouse_bottom.label	"Ссылки при курсоре снизу">
+<!ENTITY linkify_on_mouse_bottom.desc	"Преобразовывать сегменты URL в ссылки если курсор мыши попал в адресную строку снизу.">

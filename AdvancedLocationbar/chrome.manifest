@@ -1,0 +1,8 @@
+content advancedlocationbar chrome/content/
+skin advancedlocationbar classic/1.0 chrome/skin/
+
+locale advancedlocationbar en-US chrome/locale/en-US/
+locale advancedlocationbar ru-RU chrome/locale/ru-RU/
+
+style chrome://browser/content/browser.xul chrome://advancedlocationbar/skin/urlbar.css
+overlay chrome://browser/content/browser.xul chrome://advancedlocationbar/content/f6fix.xul

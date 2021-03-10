@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<overlay id="advancedlocationbar-f6fix-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <window id="main-window" retargetdocumentfocus="tabbrowser-tabs">
+    <keyset id="advancedlocationbar-f6fix-keyset">
+      <key keycode="VK_F6" oncommand="if (gURLBar.focused) gBrowser.selectedBrowser.focus(); else openLocation();"/>
+    </keyset>
+  </window>
+</overlay>
