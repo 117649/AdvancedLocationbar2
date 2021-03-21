@@ -20,7 +20,7 @@ Digest-Algorithms: MD5 SHA1
 MD5-Digest: xoJEn/Qg/PzuTzjJNS/+uA==
 SHA1-Digest: 4ed0skAbJJ9npT5/eONr8f8r734=
 
-Name: options.xul
+Name: options.xhtml
 Digest-Algorithms: MD5 SHA1
 MD5-Digest: qTrV/HSotdVPwQWLILh1YQ==
 SHA1-Digest: ixzVvhWVk1O1cWjC/k07/Sk51oY=

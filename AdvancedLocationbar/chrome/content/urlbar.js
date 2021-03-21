@@ -8,7 +8,56 @@
 // leaking to window scope.
 {
 
-class MozUrlbar extends MozUrlbar {
+class AdvUrlbar extends MozXULElement {
+  static get markup() {
+    return `
+    <hbox class="autocomplete-textbox-container urlbar-textbox-container" flex="1">
+      <stack flex="1">
+        <children includes="progressmeter"></children>
+        <hbox class="autocomplete-textbox-container-fission">
+          <hbox class="textbox-icon-box" onmouseover="gURLBar._enterLinkifyMode();">
+            <children includes="image|deck|stack|box">
+              <image class="autocomplete-icon" allowevents="true"></image>
+            </children>
+          </hbox>
+          <stack flex="1" anonid="textbox-input-box" class="textbox-input-box urlbar-input-box">
+            <hbox anonid="textbox-input-box-inner" inherits="tooltiptext=inputtooltiptext" flex="1" align="center">
+              <children></children>
+              <html:input anonid="input" class="autocomplete-textbox urlbar-input textbox-input uri-element-right-align" flex="1" allowevents="true" inherits="tooltiptext=inputtooltiptext,onfocus,onblur,value,type,maxlength,disabled,size,readonly,placeholder,userAction"></html:input>
+            </hbox>
+            <hbox anonid="presentation-box" class="textbox-presentation-box" flex="1" align="center" onmousedown="gURLBar.focus();" ondragover="nsDragAndDrop.dragOver(event, gURLBar);" ondrop="nsDragAndDrop.drop(event, gURLBar);" ondragexit="nsDragAndDrop.dragExit(event, gURLBar);">
+              <scrollbox anonid="presentation" class="textbox-presentation" flex="1">
+                <hbox is="segment" anonid="prePathSub" class="textbox-presentation-segment textbox-presentation-prePathSub">
+                  <label anonid="protocol" class="textbox-presentation-protocol"></label>
+                  <label anonid="subdomain" class="textbox-presentation-subdomain"></label>
+                </hbox>
+                <hbox is="segment" anonid="prePath" class="textbox-presentation-segment textbox-presentation-prePath">
+                  <label anonid="domain" class="textbox-presentation-domain"></label>
+                  <label anonid="port" class="textbox-presentation-port"></label>
+                </hbox>
+                <hbox is="file-segment" anonid="pathFile" class="textbox-presentation-segment textbox-presentation-pathFile">
+                  <label anonid="file" class="textbox-presentation-file"></label>
+                </hbox>
+                <hbox is="file-segment" anonid="pathFileQ" class="textbox-presentation-segment textbox-presentation-pathFile">
+                  <label anonid="query" class="textbox-presentation-query"></label>
+                </hbox>
+                <hbox is="file-segment" anonid="pathFileF" class="textbox-presentation-segment textbox-presentation-pathFile">
+                  <label anonid="fragment" class="textbox-presentation-fragment"></label>
+                </hbox>
+              </scrollbox>
+              <label anonid="overflow-ellipsis" class="textbox-overflow-ellipsis" hidden="true"></label>
+            </hbox>
+          </stack>
+          <children includes="hbox"></children>
+        </hbox>
+      </stack>
+    </hbox>
+    <dropmarker anonid="historydropmarker" class="autocomplete-history-dropmarker urlbar-history-dropmarker" allowevents="true" inherits="open,enablehistory,parentfocused=focused"></dropmarker>
+    <children includes="toolbarbutton"></children>
+    <popupset anonid="popupset" class="autocomplete-result-popupset"></popupset>
+  `;
+  }
+
   constructor() {
     super();
 
@@ -76,52 +125,7 @@ class MozUrlbar extends MozUrlbar {
       return;
     }
     this.textContent = "";
-    this.appendChild(MozXULElement.parseXULToFragment(`
-      <hbox class="autocomplete-textbox-container urlbar-textbox-container" flex="1">
-        <stack flex="1">
-          <children includes="progressmeter"></children>
-          <hbox class="autocomplete-textbox-container-fission">
-            <hbox class="textbox-icon-box" onmouseover="gURLBar._enterLinkifyMode();">
-              <children includes="image|deck|stack|box">
-                <image class="autocomplete-icon" allowevents="true"></image>
-              </children>
-            </hbox>
-            <stack flex="1" anonid="textbox-input-box" class="textbox-input-box urlbar-input-box">
-              <hbox anonid="textbox-input-box-inner" inherits="tooltiptext=inputtooltiptext" flex="1" align="center">
-                <children></children>
-                <html:input anonid="input" class="autocomplete-textbox urlbar-input textbox-input uri-element-right-align" flex="1" allowevents="true" inherits="tooltiptext=inputtooltiptext,onfocus,onblur,value,type,maxlength,disabled,size,readonly,placeholder,userAction"></html:input>
-              </hbox>
-              <hbox anonid="presentation-box" class="textbox-presentation-box" flex="1" align="center" onmousedown="gURLBar.focus();" ondragover="nsDragAndDrop.dragOver(event, gURLBar);" ondrop="nsDragAndDrop.drop(event, gURLBar);" ondragexit="nsDragAndDrop.dragExit(event, gURLBar);">
-                <scrollbox anonid="presentation" class="textbox-presentation" flex="1">
-                  <hbox anonid="prePathSub" class="textbox-presentation-segment textbox-presentation-prePathSub">
-                    <label anonid="protocol" class="textbox-presentation-protocol"></label>
-                    <label anonid="subdomain" class="textbox-presentation-subdomain"></label>
-                  </hbox>
-                  <hbox anonid="prePath" class="textbox-presentation-segment textbox-presentation-prePath">
-                    <label anonid="domain" class="textbox-presentation-domain"></label>
-                    <label anonid="port" class="textbox-presentation-port"></label>
-                  </hbox>
-                  <hbox anonid="pathFile" class="textbox-presentation-segment textbox-presentation-pathFile">
-                    <label anonid="file" class="textbox-presentation-file"></label>
-                  </hbox>
-                  <hbox anonid="pathFileQ" class="textbox-presentation-segment textbox-presentation-pathFile">
-                    <label anonid="query" class="textbox-presentation-query"></label>
-                  </hbox>
-                  <hbox anonid="pathFileF" class="textbox-presentation-segment textbox-presentation-pathFile">
-                    <label anonid="fragment" class="textbox-presentation-fragment"></label>
-                  </hbox>
-                </scrollbox>
-                <label anonid="overflow-ellipsis" class="textbox-overflow-ellipsis" hidden="true"></label>
-              </hbox>
-            </stack>
-            <children includes="hbox"></children>
-          </hbox>
-        </stack>
-      </hbox>
-      <dropmarker anonid="historydropmarker" class="autocomplete-history-dropmarker urlbar-history-dropmarker" allowevents="true" inherits="open,enablehistory,parentfocused=focused"></dropmarker>
-      <children includes="toolbarbutton"></children>
-      <popupset anonid="popupset" class="autocomplete-result-popupset"></popupset>
-    `));
+    this.appendChild(this.constructor.fragment);
     // XXX: Implement `this.inheritAttribute()` for the [inherits] attribute in the markup above!
 
     this.copy_unescaped = this._prefsext.getBoolPref("copy_unescaped");
@@ -146,10 +150,10 @@ class MozUrlbar extends MozUrlbar {
 
     this._iconWasHoveredOutTime = "";
 
-    this.pathSegmentProto =
-      var node = document.createElement("label");
+    var node = document.createElement("label", {is: 'single-segment'});
     node.className = "textbox-presentation-segment textbox-presentation-path";
-    node;
+    
+    this.pathSegmentProto = node;
 
     this.inputBox = document.getAnonymousElementByAttribute(this, "anonid", "textbox-input-box");
 
@@ -505,31 +509,24 @@ class MozUrlbar extends MozUrlbar {
   }
 }
 
-MozXULElement.implementCustomInterface(MozUrlbar, [Ci.nsIObserver, Ci.nsIDOMEventListener]);
-customElements.define("urlbar", MozUrlbar);
+MozXULElement.implementCustomInterface(AdvUrlbar, [Ci.nsIObserver, Ci.nsIDOMEventListener]);
+customElements.define("advancedlocationbar", AdvUrlbar);
 
-}
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
-  * License, v. 2.0. If a copy of the MPL was not distributed with this
-  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
-"use strict";
-
-// This is loaded into all XUL windows. Wrap in a block to prevent
-// leaking to window scope.
-{
 
 class MozSingleSegment extends MozSegment {
+  static get markup() {
+    return `
+    <label class="textbox-presentation-segment-label" anonid="label"></label>
+    <label class="textbox-presentation-slash" value="/"></label>
+    `;
+  }
+
   connectedCallback() {
     if (this.delayConnectedCallback()) {
       return;
     }
     this.textContent = "";
-    this.appendChild(MozXULElement.parseXULToFragment(`
-      <label class="textbox-presentation-segment-label" anonid="label"></label>
-      <label class="textbox-presentation-slash" value="/"></label>
-    `));
+    this.appendChild(this.constructor.fragment);
 
   }
 
@@ -544,48 +541,34 @@ class MozSingleSegment extends MozSegment {
   }
 }
 
-customElements.define("single-segment", MozSingleSegment);
+customElements.define("single-segment", MozSingleSegment, {
+  extends: "label",
+});
 
-}
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
-  * License, v. 2.0. If a copy of the MPL was not distributed with this
-  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
-"use strict";
-
-// This is loaded into all XUL windows. Wrap in a block to prevent
-// leaking to window scope.
-{
 
 class MozFileSegment extends MozSegment {
   connectedCallback() {
     if (this.delayConnectedCallback()) {
       return;
     }
-    this.textContent = "";
-    this.appendChild(MozXULElement.parseXULToFragment(`
-      <children></children>
-    `));
+    const childNodes = [...this.childNodes];
+    this.append(...childNodes);
 
   }
 }
 
-customElements.define("file-segment", MozFileSegment);
+customElements.define("file-segment", MozFileSegment, {
+  extends: "hbox",
+});
 
-}
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
-  * License, v. 2.0. If a copy of the MPL was not distributed with this
-  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
-"use strict";
-
-// This is loaded into all XUL windows. Wrap in a block to prevent
-// leaking to window scope.
-{
 
 class MozSegment extends MozXULElement {
+  static get markup() {
+    return `
+    <label class="textbox-presentation-slash" value="/"></label>
+    `;
+  }
+
   constructor() {
     super();
 
@@ -632,17 +615,17 @@ class MozSegment extends MozXULElement {
     if (this.delayConnectedCallback()) {
       return;
     }
-    this.textContent = "";
-    this.appendChild(MozXULElement.parseXULToFragment(`
-      <children></children>
-      <label class="textbox-presentation-slash" value="/"></label>
-    `));
+    const childNodes = [...this.childNodes];
+    this.append(...childNodes);
+    this.appendChild(this.constructor.fragment);
 
     this.href = "";
 
   }
 }
 
-customElements.define("segment", MozSegment);
+customElements.define("segment", MozSegment, {
+  extends: "hbox",
+});
 
 }
