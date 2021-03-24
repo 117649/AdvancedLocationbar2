@@ -44,11 +44,7 @@
         .getService(Components.interfaces.nsIPrefService)
         .getBranch("extensions.advancedlocationbar.");
 
-      this._prefsext.addObserver("", (...args) => {this.observe.call(this,...args)}, false);
-
-      this._mayTrimURLs = UrlbarPrefs.get("trimURLs")
-
-      this.copy_unescaped = this._prefsext.getBoolPref("copy_unescaped");
+      this._prefsext.addObserver("", (...args) => { this.observe.call(this, ...args) }, false);
 
       this.linkify_on_keys = this._prefsext.getBoolPref("linkify_on_keys");
 
@@ -134,12 +130,16 @@
     }
 
     connectedCallback() {
+      this._original_getSelectedValueForClipboard = gURLBar._getSelectedValueForClipboard;
+
       if (this.delayConnectedCallback()) {
         return;
       }
       this.textContent = "";
       this.appendChild(this.constructor.fragment);
       // XXX: Implement `this.inheritAttribute()` for the [inherits] attribute in the markup above!
+
+      this.copy_unescaped = this._prefsext.getBoolPref("copy_unescaped");
 
       this.uri = "";
 
@@ -245,6 +245,24 @@
 
     get value() {
       return this.inputField.value;
+    }
+
+    get _mayTrimURLs() {
+      return UrlbarPrefs.get("trimURLs");
+    }
+
+    set copy_unescaped(val) {
+      if (this._original_getSelectedValueForClipboard)
+        if (val)
+          gURLBar._getSelectedValueForClipboard = _ => this._getSelectedValueForClipboard.call(this);
+        else
+          gURLBar._getSelectedValueForClipboard = this._original_getSelectedValueForClipboard;
+
+      return val;
+    }
+
+    get copy_unescaped() {
+      return this._prefsext.getBoolPref("copy_unescaped");
     }
 
     _syncValue() {
@@ -401,6 +419,19 @@
       gURLBar.observe.call(this, subject, topic, data);
     }
 
+    _getSelectedValueForClipboard() {
+      var urlstr = this._original_getSelectedValueForClipboard.call(gURLBar);
+      if (this.copy_unescaped && !gURLBar.valueIsTyped && gURLBar.selectionStart == 0 && gURLBar.selectionEnd == gURLBar.inputField.value.length) {
+        try {
+          return UrlbarInput.prototype._getValueFromResult('', urlstr).replace(/[()"\s]/g, escape); // escape() doesn't encode @*_+-./
+        } catch (e) {
+          return urlstr;
+        }
+      } else {
+        return urlstr;
+      }
+    }
+
     _enterLinkifyMode() {
 
       var elthis = this;
@@ -547,5 +578,5 @@
     advurl,
     urlbarInput.nextSibling
   );
-  gURLBar._identityBox.addEventListener("mouseover", _ => {advurl._enterLinkifyMode();});
+  gURLBar._identityBox.addEventListener("mouseover", _ => { advurl._enterLinkifyMode(); });
 }
