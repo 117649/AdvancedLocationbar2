@@ -1,8 +1,12 @@
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 @namespace html url("http://www.w3.org/1999/xhtml");
 
-#urlbar {
-  -moz-binding: url(chrome://advancedlocationbar/content/urlbar.xml#urlbar) !important;
+advancedlocationbar:not([hidden]) {
+  display: inline-block;
+}
+
+advancedlocationbar label {
+  margin-inline: unset;
 }
 
 .textbox-presentation-box > * ,
@@ -17,26 +21,30 @@
   -moz-margin-start: 1px;
 }
 
+advancedlocationbar,
+.textbox-presentation-box {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background-color: transparent;
+  color: inherit;
+  border: none;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  appearance: auto;
+  left: 0;
+}
+
 .textbox-presentation-box ,
 .textbox-presentation-segment ,
 .textbox-presentation-slash {
   cursor: text;
 }
 
-.textbox-presentation-segment {
-  -moz-binding: url(chrome://advancedlocationbar/content/urlbar.xml#segment) !important;
-}
-
-.textbox-presentation-path {
-  -moz-binding: url(chrome://advancedlocationbar/content/urlbar.xml#single-segment) !important;
-}
-
-.textbox-presentation-pathFile {
-  -moz-binding: url(chrome://advancedlocationbar/content/urlbar.xml#file-segment) !important;
-}
-
 .textbox-presentation-prePathSub > .textbox-presentation-slash,
 .textbox-presentation-prePath.hide-trailing-slash > .textbox-presentation-slash,
+.textbox-presentation-prePath > .textbox-presentation-domain:not([value]) ~ .textbox-presentation-slash,
 .textbox-presentation-prePathSub.hide-protocol > .textbox-presentation-protocol {
   display: none;
 }
@@ -75,11 +83,11 @@
   opacity: 1.0;
 }
 
-#urlbar[linkify="true"] .textbox-presentation-segment > :not(.textbox-presentation-slash) {
+#urlbar [linkify="true"] .textbox-presentation-segment > :not(.textbox-presentation-slash) {
   cursor: pointer;
 }
 
-#urlbar[linkify="true"] .textbox-presentation-segment:hover > *,
-#urlbar[linkify="true"] .textbox-presentation-prePathSub:hover + .textbox-presentation-prePath > * {
+#urlbar [linkify="true"] .textbox-presentation-segment:hover > *,
+#urlbar [linkify="true"] .textbox-presentation-prePathSub:hover + .textbox-presentation-prePath > * {
   text-decoration: underline;
 }

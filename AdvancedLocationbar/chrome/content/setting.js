@@ -2,82 +2,122 @@
   * License, v. 2.0. If a copy of the MPL was not distributed with this
   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-  "use strict";
+"use strict";
 
-  // This is loaded into all XUL windows. Wrap in a block to prevent
-  // leaking to window scope.
-  {
-  
-  class MozSettingBase extends MozXULElement {
+// This is loaded into all XUL windows. Wrap in a block to prevent
+// leaking to window scope.
+{
+  Components.utils.import("resource://gre/modules/Services.jsm");
+
+  class Setting extends MozXULElement {
     connectedCallback() {
       if (this.delayConnectedCallback()) {
         return;
       }
-  
+
+      let type = this.getAttribute('type');
+      let localized = this.getAttribute('localized');
+
+      if (!type) return;
+
+      if (type == "bool" && !localized) var real = document.createXULElement("setting", { is: 'setting-bool' });
+
+      if (type == "bool" && localized) var real = document.createXULElement("setting", { is: 'setting-localized-bool' });
+
+      if (type == "boolint") var real = document.createXULElement("setting", { is: 'setting-boolint' });
+
+      if (type == "integer") var real = document.createXULElement("setting", { is: 'setting-integer' });
+
+      if (type == "control") var real = document.createXULElement("setting", { is: 'setting-control' });
+
+      if (type == "string") var real = document.createXULElement("setting", { is: 'setting-string' });
+
+      if (type == "color") var real = document.createXULElement("setting", { is: 'setting-color' });
+
+      if (type == "file" || type == "directory") var real = document.createXULElement("setting", { is: 'setting-path' });
+
+      if (type == "radio" || type == "menulist") var real = document.createXULElement("setting", { is: 'setting-multi' });
+
+      for (const attribute of this.attributes) {
+        real.setAttributeNS(
+          attribute.namespaceURI,
+          attribute.name,
+          attribute.value
+        );
+      }
+
+      this.replaceWith(real);
+    }
+  }
+
+  customElements.define("setting", Setting);
+
+  class MozSettingBase extends MozXULElement {
+    initialize() {
       this._observer = {
         _self: this,
-  
+
         QueryInterface(aIID) {
           const Ci = Components.interfaces;
           if (aIID.equals(Ci.nsIObserver) ||
             aIID.equals(Ci.nsISupportsWeakReference) ||
             aIID.equals(Ci.nsISupports))
             return this;
-  
+
           throw Components.Exception("No interface", Components.results.NS_ERROR_NO_INTERFACE);
         },
-  
+
         observe(aSubject, aTopic, aPrefName) {
           if (aTopic != "nsPref:changed")
             return;
-  
+
           if (this._self.pref == aPrefName)
             this._self.preferenceChanged();
         }
       };
-  
+
       this._updatingInput = false;
-  
-      this.input = document.getAnonymousElementByAttribute(this, "anonid", "input");
-  
+
+      this.input = this.getElementsByAttribute("anonid", "input")[0];
+
       this.settings = this.parentNode.localName == "settings" ? this.parentNode : null;
-  
+
       this.preferenceChanged();
-  
-      this.addEventListener("keypress", function(event) {
+
+      this.addEventListener("keypress", function (event) {
         event.stopPropagation();
       });
-  
+
       if (this.usePref)
         Services.prefs.addObserver(this.pref, this._observer, true);
-  
+
     }
-  
+
     get usePref() {
       return this.hasAttribute('pref');
     }
-  
+
     get pref() {
       return this.getAttribute('pref');
     }
-  
+
     get type() {
       return this.getAttribute('type');
     }
-  
+
     set value(val) {
       return this.input.value = val;
     }
-  
+
     get value() {
       return this.input.value;
     }
-  
+
     fireEvent(eventName, funcStr) {
       let body = funcStr || this.getAttribute(eventName);
       if (!body)
         return;
-  
+
       try {
         let event = document.createEvent("Events");
         event.initEvent(eventName, true, true);
@@ -87,53 +127,51 @@
         Cu.reportError(e);
       }
     }
-  
+
     valueFromPreference() {
       // Should be code to set the from the preference input.value
       throw Components.Exception("No valueFromPreference implementation",
         Components.results.NS_ERROR_NOT_IMPLEMENTED);
     }
-  
+
     valueToPreference() {
       // Should be code to set the input.value from the preference
       throw Components.Exception("No valueToPreference implementation",
         Components.results.NS_ERROR_NOT_IMPLEMENTED);
     }
-  
+
     inputChanged() {
       if (this.usePref && !this._updatingInput) {
         this.valueToPreference();
         this.fireEvent("oninputchanged");
       }
     }
-  
+
     preferenceChanged() {
       if (this.usePref) {
         this._updatingInput = true;
         try {
           this.valueFromPreference();
           this.fireEvent("onpreferencechanged");
-        } catch (e) {}
+        } catch (e) { }
         this._updatingInput = false;
       }
     }
   }
-  
-  customElements.define("setting-base", MozSettingBase);
-  
+
   class MozSettingBool extends MozSettingBase {
     static get markup() {
       return `
-        <vbox>
-          <hbox class="preferences-alignment">
-            <label class="preferences-title" flex="1" inherits="text=title"></label>
-          </hbox>
-          <description class="preferences-description" flex="1" inherits="text=desc"></description>
-          <label class="preferences-learnmore text-link" onclick="document.getBindingParent(this).openLearnMore()"></label>
-        </vbox>
+      <vbox>
         <hbox class="preferences-alignment">
-          <checkbox anonid="input" inherits="disabled,onlabel,offlabel,label=checkboxlabel" oncommand="inputChanged();"></checkbox>
+          <label class="preferences-title" flex="1" inherits="text=title"></label>
         </hbox>
+        <description class="preferences-description" flex="1" inherits="text=desc"></description>
+        <label class="preferences-learnmore text-link" onclick="document.getBindingParent(this).openLearnMore()"></label>
+      </vbox>
+      <hbox class="preferences-alignment">
+        <checkbox anonid="input" inherits="disabled,onlabel,offlabel,label=checkboxlabel" oncommand="inputChanged();"></checkbox>
+      </hbox>
       `;
     }
 
@@ -153,72 +191,63 @@
       this.appendChild(this.constructor.fragment);
       // XXX: Implement `this.inheritAttribute()` for the [inherits] attribute in the markup above!
       this.initializeAttributeInheritance();
-  
+      this.initialize();
+
     }
-  
+
     set value(val) {
-      return this.input.setChecked(val);
+      return this.input.checked = val;
     }
-  
+
     get value() {
       return this.input.checked;
     }
-  
+
     get inverted() {
       return this.getAttribute('inverted');
     }
-  
+
     valueFromPreference() {
       let val = Services.prefs.getBoolPref(this.pref);
       this.value = this.inverted ? !val : val;
     }
-  
+
     valueToPreference() {
       let val = this.value;
       Services.prefs.setBoolPref(this.pref, this.inverted ? !val : val);
     }
-  
+
     openLearnMore() {
       window.open(this.getAttribute("learnmore"), "_blank");
     }
   }
-  
-  customElements.define("setting-bool", MozSettingBool);
-  
+
+  customElements.define("setting-bool", MozSettingBool, {
+    extends: "setting",
+  });
+
   class MozSettingBoolint extends MozSettingBool {
-    connectedCallback() {
-      if (this.delayConnectedCallback()) {
-        return;
-      }
-  
-    }
-  
     valueFromPreference() {
       let val = Services.prefs.getIntPref(this.pref);
       this.value = (val == this.getAttribute("on"));
     }
-  
+
     valueToPreference() {
       Services.prefs.setIntPref(this.pref, this.getAttribute(this.value ? "on" : "off"));
     }
   }
-  
-  customElements.define("setting-boolint", MozSettingBoolint);
-  
+
+  customElements.define("setting-boolint", MozSettingBoolint, {
+    extends: "setting",
+  });
+
   class MozSettingLocalizedBool extends MozSettingBool {
-    connectedCallback() {
-      if (this.delayConnectedCallback()) {
-        return;
-      }
-  
-    }
-  
     valueFromPreference() {
       let val = Services.prefs.getComplexValue(this.pref, Components.interfaces.nsIPrefLocalizedString).data;
       if (this.inverted) val = !val;
       this.value = (val == "true");
     }
-  
+
     valueToPreference() {
       let val = this.value;
       if (this.inverted) val = !val;
@@ -227,21 +256,21 @@
       Services.prefs.setComplexValue(this.pref, Components.interfaces.nsIPrefLocalizedString, pref);
     }
   }
-  
+
   customElements.define("setting-localized-bool", MozSettingLocalizedBool);
-  
+
   class MozSettingInteger extends MozSettingBase {
     static get markup() {
       return `
-        <vbox>
-          <hbox class="preferences-alignment">
-            <label class="preferences-title" flex="1" inherits="text=title"></label>
-          </hbox>
-          <description class="preferences-description" flex="1" inherits="text=desc"></description>
-        </vbox>
+      <vbox>
         <hbox class="preferences-alignment">
-          <textbox type="number" anonid="input" oninput="inputChanged();" onchange="inputChanged();" inherits="disabled,emptytext,min,max,increment,hidespinbuttons,wraparound,size"></textbox>
+          <label class="preferences-title" flex="1" inherits="text=title"></label>
         </hbox>
+        <description class="preferences-description" flex="1" inherits="text=desc"></description>
+      </vbox>
+      <hbox class="preferences-alignment">
+        <html:input type="number" anonid="input" oninput="inputChanged();" onchange="inputChanged();" inherits="disabled,emptytext,min,max,increment,hidespinbuttons,wraparound,size"></html:input>
+      </hbox>
       `;
     }
 
@@ -261,32 +290,35 @@
       this.appendChild(this.constructor.fragment);
       // XXX: Implement `this.inheritAttribute()` for the [inherits] attribute in the markup above!
       this.initializeAttributeInheritance();
-  
+      this.initialize();
+
     }
-  
+
     valueFromPreference() {
       let val = Services.prefs.getIntPref(this.pref);
       this.value = val;
     }
-  
+
     valueToPreference() {
       Services.prefs.setIntPref(this.pref, this.value);
     }
   }
-  
-  customElements.define("setting-integer", MozSettingInteger);
-  
+
+  customElements.define("setting-integer", MozSettingInteger, {
+    extends: "setting",
+  });
+
   class MozSettingControl extends MozSettingBase {
     static get markup() {
       return `
-        <vbox>
-          <hbox class="preferences-alignment">
-            <label class="preferences-title" flex="1" inherits="text=title"></label>
-          </hbox>
-          <description class="preferences-description" flex="1" inherits="text=desc"></description>
-        </vbox>
+      <vbox>
         <hbox class="preferences-alignment">
+          <label class="preferences-title" flex="1" inherits="text=title"></label>
         </hbox>
+        <description class="preferences-description" flex="1" inherits="text=desc"></description>
+      </vbox>
+      <hbox class="preferences-alignment">
+      </hbox>
      `;
     }
 
@@ -308,24 +340,27 @@
       children.append(...childNodes);
       // XXX: Implement `this.inheritAttribute()` for the [inherits] attribute in the markup above!
       this.initializeAttributeInheritance();
-  
+      this.initialize();
+
     }
   }
-  
-  customElements.define("setting-control", MozSettingControl);
-  
+
+  customElements.define("setting-control", MozSettingControl, {
+    extends: "setting",
+  });
+
   class MozSettingString extends MozSettingBase {
     static get markup() {
       return `
-        <vbox>
-          <hbox class="preferences-alignment">
-            <label class="preferences-title" flex="1" inherits="text=title"></label>
-          </hbox>
-          <description class="preferences-description" flex="1" inherits="text=desc"></description>
-        </vbox>
+      <vbox>
         <hbox class="preferences-alignment">
-          <textbox anonid="input" flex="1" oninput="inputChanged();" inherits="disabled,emptytext,type=inputtype,min,max,increment,hidespinbuttons,decimalplaces,wraparound"></textbox>
+          <label class="preferences-title" flex="1" inherits="text=title"></label>
         </hbox>
+        <description class="preferences-description" flex="1" inherits="text=desc"></description>
+      </vbox>
+      <hbox class="preferences-alignment">
+        <html:input anonid="input" flex="1" oninput="inputChanged();" inherits="disabled,emptytext,type=inputtype,min,max,increment,hidespinbuttons,decimalplaces,wraparound"></html:input>
+      </hbox>
       `;
     }
 
@@ -345,32 +380,35 @@
       this.appendChild(this.constructor.fragment);
       // XXX: Implement `this.inheritAttribute()` for the [inherits] attribute in the markup above!
       this.initializeAttributeInheritance();
-  
+      this.initialize();
+
     }
-  
+
     valueFromPreference() {
       this.value = Preferences.get(this.pref, "");
     }
-  
+
     valueToPreference() {
       Preferences.set(this.pref, this.value);
     }
   }
-  
-  customElements.define("setting-string", MozSettingString);
-  
+
+  customElements.define("setting-string", MozSettingString, {
+    extends: "setting",
+  });
+
   class MozSettingColor extends MozSettingBase {
     static get markup() {
       return `
-        <vbox>
-          <hbox class="preferences-alignment">
-            <label class="preferences-title" flex="1" inherits="text=title"></label>
-          </hbox>
-          <description class="preferences-description" flex="1" inherits="text=desc"></description>
-        </vbox>
+      <vbox>
         <hbox class="preferences-alignment">
-          <colorpicker type="button" anonid="input" inherits="disabled" onchange="document.getBindingParent(this).inputChanged();"></colorpicker>
+          <label class="preferences-title" flex="1" inherits="text=title"></label>
         </hbox>
+        <description class="preferences-description" flex="1" inherits="text=desc"></description>
+      </vbox>
+      <hbox class="preferences-alignment">
+        <html:input type="color" anonid="input" inherits="disabled" onchange="document.getBindingParent(this).inputChanged();"></html:input>
+      </hbox>
       `;
     }
 
@@ -390,44 +428,47 @@
       this.appendChild(this.constructor.fragment);
       // XXX: Implement `this.inheritAttribute()` for the [inherits] attribute in the markup above!
       this.initializeAttributeInheritance();
-  
+      this.initialize();
+
     }
-  
+
     set value(val) {
       return this.input.color = val;
     }
-  
+
     get value() {
       return this.input.color;
     }
-  
+
     valueFromPreference() {
       // We must wait for the colorpicker's binding to be applied before setting the value
       if (!this.input.color)
         this.input.initialize();
       this.value = Services.prefs.getCharPref(this.pref);
     }
-  
+
     valueToPreference() {
       Services.prefs.setCharPref(this.pref, this.value);
     }
   }
-  
-  customElements.define("setting-color", MozSettingColor);
-  
+
+  customElements.define("setting-color", MozSettingColor, {
+    extends: "setting",
+  });
+
   class MozSettingPath extends MozSettingBase {
     static get markup() {
       return `
-        <vbox>
-          <hbox class="preferences-alignment">
-            <label class="preferences-title" flex="1" inherits="text=title"></label>
-          </hbox>
-          <description class="preferences-description" flex="1" inherits="text=desc"></description>
-        </vbox>
+      <vbox>
         <hbox class="preferences-alignment">
-          <button type="button" anonid="button" label="FROM-DTD.settings.path.button.label;" inherits="disabled" oncommand="showPicker();"></button>
-          <label anonid="input" flex="1" crop="center" inherits="disabled"></label>
+          <label class="preferences-title" flex="1" inherits="text=title"></label>
         </hbox>
+        <description class="preferences-description" flex="1" inherits="text=desc"></description>
+      </vbox>
+      <hbox class="preferences-alignment">
+        <button type="button" anonid="button" label="FROM-DTD.settings.path.button.label;" inherits="disabled" oncommand="showPicker();"></button>
+        <label anonid="input" flex="1" crop="center" inherits="disabled"></label>
+      </hbox>
       `;
     }
 
@@ -448,11 +489,12 @@
       this.appendChild(this.constructor.fragment);
       // XXX: Implement `this.inheritAttribute()` for the [inherits] attribute in the markup above!
       this.initializeAttributeInheritance();
-  
+      this.initialize();
+
       this._value = "";
-  
+
     }
-  
+
     set value(val) {
       this._value = val;
       let label = "";
@@ -461,16 +503,16 @@
           let file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
           file.initWithPath(val);
           label = this.hasAttribute("fullpath") ? file.path : file.leafName;
-        } catch (e) {}
+        } catch (e) { }
       }
       this.input.tooltipText = val;
       return this.input.value = label;
     }
-  
+
     get value() {
       return this._value;
     }
-  
+
     showPicker() {
       var filePicker = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
       filePicker.init(window, this.getAttribute("title"),
@@ -483,7 +525,7 @@
           if (this.type == "file") {
             filePicker.defaultString = file.leafName;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
       filePicker.open(rv => {
         if (rv != Ci.nsIFilePicker.returnCancel && filePicker.file) {
@@ -492,30 +534,32 @@
         }
       });
     }
-  
+
     valueFromPreference() {
       this.value = Preferences.get(this.pref, "");
     }
-  
+
     valueToPreference() {
       Preferences.set(this.pref, this.value);
     }
   }
-  
-  customElements.define("setting-path", MozSettingPath);
-  
+
+  customElements.define("setting-path", MozSettingPath, {
+    extends: "setting",
+  });
+
   class MozSettingMulti extends MozSettingBase {
     static get markup() {
       return `
-        <vbox>
-          <hbox class="preferences-alignment">
-            <label class="preferences-title" flex="1" inherits="text=title"></label>
-          </hbox>
-          <description class="preferences-description" flex="1" inherits="text=desc"></description>
-        </vbox>
+      <vbox>
         <hbox class="preferences-alignment">
-          <children includes="radiogroup|menulist"></children>
+          <label class="preferences-title" flex="1" inherits="text=title"></label>
         </hbox>
+        <description class="preferences-description" flex="1" inherits="text=desc"></description>
+      </vbox>
+      <hbox class="preferences-alignment">
+        <children includes="radiogroup|menulist"></children>
+      </hbox>
       `;
     }
 
@@ -538,16 +582,17 @@
       children.append(...childNodes);
       // XXX: Implement `this.inheritAttribute()` for the [inherits] attribute in the markup above!
       this.initializeAttributeInheritance();
-  
+      this.initialize();
+
       this.control = this.getElementsByTagName(this.getAttribute("type") == "radio" ? "radiogroup" : "menulist")[0];
-  
+
       this.control.addEventListener("command", this.inputChanged.bind(this));
-  
+
     }
-  
+
     valueFromPreference() {
       let val = Preferences.get(this.pref, "").toString();
-  
+
       if ("itemCount" in this.control) {
         for (let i = 0; i < this.control.itemCount; i++) {
           if (this.control.getItemAtIndex(i).value == val) {
@@ -559,7 +604,7 @@
         this.control.setAttribute("value", val);
       }
     }
-  
+
     valueToPreference() {
       // We might not have a pref already set, so we guess the type from the value attribute
       let val = this.control.selectedItem.value;
@@ -571,8 +616,9 @@
       Preferences.set(this.pref, val);
     }
   }
-  
-  customElements.define("setting-multi", MozSettingMulti);
-  
-  }
-  
+
+  customElements.define("setting-multi", MozSettingMulti, {
+    extends: "setting",
+  });
+
+}

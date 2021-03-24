@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 
 <!DOCTYPE window SYSTEM "chrome://advancedlocationbar/locale/options.dtd">
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 
 <vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	<script type="application/javascript" src="chrome://advancedlocationbar/content/setting.js" />
 	<setting type="bool" pref="extensions.advancedlocationbar.copy_unescaped" title="&copy_unescaped.label;" />
 	<setting type="bool" pref="browser.urlbar.trimURLs" title="&trim_urls.label;" />
 	<setting type="bool" pref="browser.urlbar.clickSelectsAll" title="&click_selects_all.label;" />
@@ -13,5 +15,3 @@
 	<setting type="bool" pref="extensions.advancedlocationbar.linkify_on_mouse_top" title="&linkify_on_mouse_top.label;" desc="&linkify_on_mouse_top.desc;" />
 	<setting type="bool" pref="extensions.advancedlocationbar.linkify_on_mouse_bottom" title="&linkify_on_mouse_bottom.label;" desc="&linkify_on_mouse_bottom.desc;" />
 </vbox>
-
-<script type="application/javascript" src="chrome://roomybookmarkstoolbar/content/setting.js" />

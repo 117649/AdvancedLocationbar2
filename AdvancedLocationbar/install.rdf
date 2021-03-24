@@ -10,7 +10,7 @@
 		<em:creator>VEG</em:creator>
 		<em:homepageURL>http://veg.by/</em:homepageURL>
 		<em:optionsURL>chrome://advancedlocationbar/content/options.xhtml</em:optionsURL>
-		<em:optionsType>3</em:optionsType>
+		<em:optionsType>5</em:optionsType>
 		<em:developer>Dão Gottwald</em:developer>
 		<em:developer>Simon Lindholm</em:developer>
 		<em:multiprocessCompatible>true</em:multiprocessCompatible>
