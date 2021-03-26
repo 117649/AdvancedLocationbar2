@@ -68,6 +68,10 @@
 
       this.pathSegmentProto = node;
 
+      var node2 = document.createXULElement("hbox", { is: 'searchparam-segment' });
+
+      this.paramSegmentProto = node2;
+
       gURLBar.addEventListener("input", (event) => { this._syncValue(); });
 
       gURLBar.addEventListener("ValueChange", (event) => { this._syncValue(); this.prettyView(); })
@@ -223,6 +227,9 @@
       if (val) {
         this.inputBoxInner.style.removeProperty("opacity");
         this.hidden = true;
+        if (this._modified) {
+          this.inputField.value = this.pathFileNodeF.href;
+        }
       } else
         this.inputBoxInner.style.setProperty("opacity", "0", "important");
       this.presentationBox.style.removeProperty("opacity");
@@ -285,6 +292,7 @@
         this._contentIsCropped = false;
         return;
       }
+      this.url = new URL(this.uri.spec);
 
       var presentation = this.presentation;
       var prePathSubNode = this.prePathSubNode;
@@ -328,6 +336,9 @@
       while (prePathNode.nextSibling != this.pathFileNode)
         presentation.removeChild(prePathNode.nextSibling);
 
+      while (this.pathFileNodeQ.nextSibling != this.pathFileNodeF)
+        presentation.removeChild(this.pathFileNodeQ.nextSibling);
+
       var pathSegments = UrlbarInput.prototype._getValueFromResult('', this.uri.spec).replace(/^[^:]*:\/\/[^\/]*\//, "");
 
       var iFragment = pathSegments.indexOf("#");
@@ -339,10 +350,22 @@
 
       var iQuery = pathSegments.indexOf("?");
       if (iQuery > -1) {
-        this.queryNode.value = pathSegments.substring(iQuery);
+        this.pathFileNodeQ.rferf = pathSegments.substring(iQuery);
         pathSegments = pathSegments.substring(0, iQuery);
+        let sp = [...this.url.searchParams];
+        if (sp.length > 0 && sp[0][1]) {
+          this.queryNode.value = "?";
+          var h = href + pathSegments + this.queryNode.value;
+          for (const p of sp) {
+            var node = this.paramSegmentProto.cloneNode(true);
+            node.value = p;
+            node.href = h += (z || '') + node.value;
+            presentation.insertBefore(node, this.pathFileNodeF);
+            var z = '&';
+          }
+        } else this.queryNode.value = this.pathFileNodeQ.rferf;
       } else
-        this.queryNode.value = "";
+        this.pathFileNodeQ.rferf = this.queryNode.value = "";
 
       pathSegments = pathSegments.split("/");
       this.fileNode.value = pathSegments.pop();
@@ -354,7 +377,7 @@
         presentation.insertBefore(node, this.pathFileNode);
       }
       this.pathFileNode.href = (href += this.fileNode.value);
-      this.pathFileNodeQ.href = (href += this.queryNode.value);
+      this.pathFileNodeQ.href = (href += this.pathFileNodeQ.rferf);
       this.pathFileNodeF.href = (href += this.fragmentNode.value);
 
       if (href == baseHref && href.slice(-1) == "/" && this._mayTrimURLs)
@@ -367,6 +390,17 @@
       else
         this.prePathSubNode.classList.remove("hide-protocol");
 
+    }
+
+    _updateHref() {
+      const sp = [...this.getElementsByAttribute("is", "searchparam-segment")];
+      for (const node of sp) {
+        node.href = node.previousSibling.href + z || '' + node.value;
+        var z = '&';
+      }
+      this.queryNode.value = this.pathFileNodeQ.rferf = sp.pop().value;
+      this.pathFileNodeQ.href = (href += this.pathFileNodeQ.rferf);
+      this.pathFileNodeF.href = (href += this.fragmentNode.value);
     }
 
     _prettyView() {
@@ -554,6 +588,73 @@
   }
 
   customElements.define("single-segment", MozSingleSegment, {
+    extends: "hbox",
+  });
+
+  class MozSearchParamSegment extends MozSegment {
+    static get markup() {
+      return `
+      <label class="textbox-presentation-segment-label textbox-presentation-ampersand" value="&amp;"></label>
+      <label class="textbox-presentation-segment-label" anonid="key"></label>
+      <label class="textbox-presentation-segment-label textbox-presentation-segment-equals" value="="></label>
+      <label class="textbox-presentation-segment-label" anonid="value"></label>
+      <html:input type="number" class="textbox-presentation-segment-label" hidden="true"/>
+      `;
+    }
+
+    constructor() {
+      super();
+
+      this.className = "textbox-presentation-segment textbox-presentation-searchParam";
+    }
+
+    connectedCallback() {
+      if (this.delayConnectedCallback()) {
+        return;
+      }
+      this.textContent = "";
+      this.appendChild(this.constructor.fragment);
+      this._labelKey = this.getElementsByAttribute("anonid", "key")[0];
+      this._labelValue = this.getElementsByAttribute("anonid", "value")[0];
+      this._numValue = this.getElementsByTagName('html:input')[0];
+      this._labelKey.value = this._value[0];
+      this._assignValue(this._value[1]);
+      this._numValue.addEventListener('change', _ => {
+        if (!this._labelValue.value) {
+          this._value[1] = this._numValue.value;
+          this.closest('advancedlocationbar')._modified = true;
+          this.closest('advancedlocationbar')._updateHref();
+        }
+      });
+    }
+
+    _assignValue(val) {
+      if (+val === +val) {
+        this._labelValue.value = '';
+        this._numValue.value = val;
+        this._numValue.hidden = false;
+      } else {
+        this._labelValue.value = val;
+        this._numValue.value = '';
+        this._numValue.hidden = true;
+      }
+    }
+
+    set value([key, value]) {
+      this._value = [key, value];
+      if (this._labelKey && this._labelValue && this._numValue) {
+        this._labelKey.value = this._value[0];
+        this._assignValue(this._value[1]);
+      }
+      return key + '=' + value;
+    }
+
+    get value() {
+      return this._value[0] + '=' + this._value[1];
+    }
+  }
+
+  customElements.define("searchparam-segment", MozSearchParamSegment, {
     extends: "hbox",
   });
 
