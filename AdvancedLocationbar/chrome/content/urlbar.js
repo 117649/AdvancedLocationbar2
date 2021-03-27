@@ -74,7 +74,7 @@
 
       gURLBar.addEventListener("input", (event) => { this._syncValue(); });
 
-      gURLBar.addEventListener("ValueChange", (event) => { this._syncValue(); this.prettyView(); })
+      gURLBar.addEventListener("ValueChange", (event) => { if (!this._noSync) { this._syncValue(); this.prettyView(); } })
 
       gURLBar.textbox.addEventListener("mouseover", (event) => {
         if (this._mouseover)
@@ -227,9 +227,6 @@
       if (val) {
         this.inputBoxInner.style.removeProperty("opacity");
         this.hidden = true;
-        if (this._modified) {
-          this.inputField.value = this.pathFileNodeF.href;
-        }
       } else
         this.inputBoxInner.style.setProperty("opacity", "0", "important");
       this.presentationBox.style.removeProperty("opacity");
@@ -393,13 +390,13 @@
     }
 
     _updateHref() {
-      const sp = [...this.getElementsByAttribute("is", "searchparam-segment")];
+      const sp = [...this.getElementsByClassName("textbox-presentation-searchParam")];
+      var href = this.pathFileNode.href + this.queryNode.value;
       for (const node of sp) {
-        node.href = node.previousSibling.href + z || '' + node.value;
+        node.href = (href += (z || '') + node.value);
         var z = '&';
       }
-      this.queryNode.value = this.pathFileNodeQ.rferf = sp.pop().value;
-      this.pathFileNodeQ.href = (href += this.pathFileNodeQ.rferf);
+      this.pathFileNodeQ.href = this.pathFileNodeQ.rferf = sp.pop().href;
       this.pathFileNodeF.href = (href += this.fragmentNode.value);
     }
 
@@ -597,8 +594,13 @@
       <label class="textbox-presentation-segment-label textbox-presentation-ampersand" value="&amp;"></label>
       <label class="textbox-presentation-segment-label" anonid="key"></label>
       <label class="textbox-presentation-segment-label textbox-presentation-segment-equals" value="="></label>
-      <label class="textbox-presentation-segment-label" anonid="value"></label>
-      <html:input type="number" class="textbox-presentation-segment-label" hidden="true"/>
+      <div class="textbox-presentation-segment-numbox">
+        <toolbarbutton class="textbox-presentation-segment-numbutton" onclick='_onButton(false);event.stopPropagation();' >-</toolbarbutton>
+        <div style="flex: 1">
+          <label class="textbox-presentation-segment-label" anonid="value"></label>
+        </div>
+        <toolbarbutton class="textbox-presentation-segment-numbutton" onclick='_onButton(true);event.stopPropagation();' >+</toolbarbutton>
+      </div>
       `;
     }
 
@@ -606,6 +608,7 @@
       super();
 
       this.className = "textbox-presentation-segment textbox-presentation-searchParam";
+      this.setAttribute('align', "center");
     }
 
     connectedCallback() {
@@ -616,35 +619,26 @@
       this.appendChild(this.constructor.fragment);
       this._labelKey = this.getElementsByAttribute("anonid", "key")[0];
       this._labelValue = this.getElementsByAttribute("anonid", "value")[0];
-      this._numValue = this.getElementsByTagName('html:input')[0];
-      this._labelKey.value = this._value[0];
-      this._assignValue(this._value[1]);
-      this._numValue.addEventListener('change', _ => {
-        if (!this._labelValue.value) {
-          this._value[1] = this._numValue.value;
-          this.closest('advancedlocationbar')._modified = true;
-          this.closest('advancedlocationbar')._updateHref();
-        }
-      });
+      this.value = this._value;
     }
 
-    _assignValue(val) {
-      if (+val === +val) {
-        this._labelValue.value = '';
-        this._numValue.value = val;
-        this._numValue.hidden = false;
-      } else {
-        this._labelValue.value = val;
-        this._numValue.value = '';
-        this._numValue.hidden = true;
-      }
+    _onButton(plus) {
+      this._value[1] = parseInt(this._value[1]);
+      plus ? this._value[1] += 1 : this._value[1] -= 1;
+      this._labelValue.value = this._value[1];
+      this.closest('advancedlocationbar')._updateHref();
+      this.closest('advancedlocationbar')._noSync = true;
+      this.closest('advancedlocationbar').inputField.value = this.closest('advancedlocationbar').pathFileNodeF.href;
+      this.closest('advancedlocationbar')._noSync = false;
     }
 
     set value([key, value]) {
       this._value = [key, value];
-      if (this._labelKey && this._labelValue && this._numValue) {
+      if (this._labelKey && this._labelValue) {
         this._labelKey.value = this._value[0];
-        this._assignValue(this._value[1]);
+        this._labelValue.value = this._value[1];
+        if ((+value === +value)&&value) this.setAttribute('numeric', true);
+        else this.removeAttribute('numeric');
       }
       return key + '=' + value;
     }

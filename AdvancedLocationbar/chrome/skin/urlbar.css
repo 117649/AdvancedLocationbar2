@@ -8,11 +8,40 @@ advancedlocationbar label {
 
 .textbox-presentation-box > * ,
 .textbox-presentation-segment ,
-.textbox-presentation-segment > * {
+.textbox-presentation-segment > *,
+.textbox-presentation-segment-numbox ,
+.textbox-presentation-segment-numbox > * {
   margin: 0;
   padding: 0;
   border: none;
 }
+
+
+.textbox-presentation-searchParam[numeric] > .textbox-presentation-segment-numbox:hover {
+  border: 1px solid;
+  text-decoration: none !important;
+  display: flex; 
+  margin-left: calc(-2ch - 1px);
+  position: relative;
+  margin-right: calc(-2ch - 1px);
+  background-color: ghostwhite;
+  opacity: 0.75;
+  z-index: 1;
+}
+
+.textbox-presentation-searchParam[numeric] > .textbox-presentation-segment-numbox:hover > div {
+  background: transparent;
+  text-decoration: underline;
+}
+
+.textbox-presentation-searchParam[numeric] > .textbox-presentation-segment-numbox:hover > .textbox-presentation-segment-numbutton {
+  display: flex;
+  width: 2ch; 
+  min-width: 2ch;
+  align-items: center; 
+  justify-content: center;
+}
+
 
 .textbox-overflow-ellipsis ,
 .textbox-presentation-box {
@@ -40,11 +69,7 @@ advancedlocationbar,
   cursor: text;
 }
 
-.textbox-presentation-prePathSub > .textbox-presentation-slash,
-.textbox-presentation-prePath.hide-trailing-slash > .textbox-presentation-slash,
-.textbox-presentation-prePath > .textbox-presentation-domain:not([value]) ~ .textbox-presentation-slash,
-.textbox-presentation-pathFile[anonid=pathFileQ] + .textbox-presentation-searchParam > .textbox-presentation-ampersand,
-.textbox-presentation-prePathSub.hide-protocol > .textbox-presentation-protocol {
+.textbox-presentation-prePathSub > .textbox-presentation-slash, .textbox-presentation-prePath.hide-trailing-slash > .textbox-presentation-slash, .textbox-presentation-prePath > .textbox-presentation-domain:not([value]) ~ .textbox-presentation-slash, .textbox-presentation-pathFile[anonid="pathFileQ"] + .textbox-presentation-searchParam > .textbox-presentation-ampersand, .textbox-presentation-prePathSub.hide-protocol > .textbox-presentation-protocol, .textbox-presentation-segment-numbox > .textbox-presentation-segment-numbutton {
   display: none;
 }
 
@@ -62,6 +87,7 @@ advancedlocationbar,
 .textbox-presentation-file,
 .textbox-presentation-query,
 .textbox-presentation-searchParam,
+.textbox-presentation-searchParam[numeric]:hover > .textbox-presentation-segment-label,
 .textbox-presentation-fragment {
   opacity: 0.5;
 }
@@ -74,6 +100,7 @@ advancedlocationbar,
 .no-format-on-hover:hover .textbox-presentation-file,
 .no-format-on-hover:hover .textbox-presentation-query,
 .no-format-on-hover:hover .textbox-presentation-searchParam,
+.textbox-presentation-searchParam[numeric]:hover,
 .no-format-on-hover:hover .textbox-presentation-fragment {
   opacity: 1.0;
 }
@@ -84,7 +111,7 @@ advancedlocationbar,
   opacity: 1.0;
 }
 
-#urlbar [linkify="true"] .textbox-presentation-segment > :not(.textbox-presentation-slash) {
+#urlbar [linkify="true"] .textbox-presentation-segment > :not(.textbox-presentation-slash) label{
   cursor: pointer;
 }
 
