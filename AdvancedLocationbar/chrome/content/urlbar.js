@@ -349,8 +349,8 @@
       if (iQuery > -1) {
         this.pathFileNodeQ.rferf = pathSegments.substring(iQuery);
         pathSegments = pathSegments.substring(0, iQuery);
-        let sp = [...this.url.searchParams];
-        if (sp.length > 0 && sp[0][1]) {
+        let sp = [...this.url.search.substring(1).split("&")];
+        if (sp.length > 0) {
           this.queryNode.value = "?";
           var h = href + pathSegments + this.queryNode.value;
           for (const p of sp) {
@@ -593,7 +593,6 @@
       return `
       <label class="textbox-presentation-segment-label textbox-presentation-ampersand" value="&amp;"></label>
       <label class="textbox-presentation-segment-label" anonid="key"></label>
-      <label class="textbox-presentation-segment-label textbox-presentation-segment-equals" value="="></label>
       <div class="textbox-presentation-segment-numbox">
         <toolbarbutton class="textbox-presentation-segment-numbutton" onclick='_onButton(false);event.stopPropagation();' >-</toolbarbutton>
         <div style="flex: 1">
@@ -623,28 +622,32 @@
     }
 
     _onButton(plus) {
-      this._value[1] = parseInt(this._value[1]);
-      plus ? this._value[1] += 1 : this._value[1] -= 1;
-      this._labelValue.value = this._value[1];
+      var l = this.parentNode.scrollLeftMax;
+      this._labelValue.value = plus ? parseInt(this._labelValue.value) + 1 : parseInt(this._labelValue.value) - 1;
+      this._value = this._labelKey.value + this._labelValue.value;
+      if (plus && this.parentNode.scrollLeftMax > l) this.parentNode.scrollLeft += (this.parentNode.scrollLeftMax - l);
       this.closest('advancedlocationbar')._updateHref();
       this.closest('advancedlocationbar')._noSync = true;
-      this.closest('advancedlocationbar').inputField.value = this.closest('advancedlocationbar').pathFileNodeF.href;
+      gURLBar.value = this.closest('advancedlocationbar').pathFileNodeF.href;
       this.closest('advancedlocationbar')._noSync = false;
     }
 
-    set value([key, value]) {
-      this._value = [key, value];
+    set value(val) {
+      this._value = val;
       if (this._labelKey && this._labelValue) {
-        this._labelKey.value = this._value[0];
-        this._labelValue.value = this._value[1];
-        if ((+value === +value)&&value) this.setAttribute('numeric', true);
+        let ei = val.indexOf('=')
+        if (ei > -1) {
+          this._labelKey.value = this._value.substring(0, ei + 1);
+          this._labelValue.value = this._value.substring(ei + 1);
+        } else this._labelKey.value = this._value;
+        if ((+this._labelValue.value === +this._labelValue.value) && this._labelValue.value) this.setAttribute('numeric', true);
         else this.removeAttribute('numeric');
       }
-      return key + '=' + value;
+      return val;
     }
 
     get value() {
-      return this._value[0] + '=' + this._value[1];
+      return this._value;
     }
   }
 

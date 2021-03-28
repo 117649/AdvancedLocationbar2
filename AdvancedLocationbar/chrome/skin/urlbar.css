@@ -111,7 +111,8 @@ advancedlocationbar,
   opacity: 1.0;
 }
 
-#urlbar [linkify="true"] .textbox-presentation-segment > :not(.textbox-presentation-slash) label{
+#urlbar [linkify="true"] .textbox-presentation-segment > :not(.textbox-presentation-slash),
+#urlbar [linkify="true"] .textbox-presentation-segment > :not(.textbox-presentation-slash) * {
   cursor: pointer;
 }
 
