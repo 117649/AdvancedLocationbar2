@@ -349,7 +349,7 @@
       if (iQuery > -1) {
         this.pathFileNodeQ.rferf = pathSegments.substring(iQuery);
         pathSegments = pathSegments.substring(0, iQuery);
-        let sp = [...this.url.search.substring(1).split("&")];
+        let sp = [...this.pathFileNodeQ.rferf.substring(1).split("&")];
         if (sp.length > 0) {
           this.queryNode.value = "?";
           var h = href + pathSegments + this.queryNode.value;
@@ -593,12 +593,14 @@
       return `
       <label class="textbox-presentation-segment-label textbox-presentation-ampersand" value="&amp;"></label>
       <label class="textbox-presentation-segment-label" anonid="key"></label>
-      <div class="textbox-presentation-segment-numbox">
-        <toolbarbutton class="textbox-presentation-segment-numbutton" onclick='_onButton(false);event.stopPropagation();' >-</toolbarbutton>
-        <div style="flex: 1">
-          <label class="textbox-presentation-segment-label" anonid="value"></label>
+      <div class="textbox-presentation-segment-numbox" align="center">
+        <label class="textbox-presentation-segment-label" anonid="value"></label>
+        <div align="center">
+          <toolbarbutton class="textbox-presentation-segment-numbutton" onclick='_onButton(true);event.stopPropagation();'>
+          </toolbarbutton>
+          <toolbarbutton class="textbox-presentation-segment-numbutton" onclick='_onButton(false);event.stopPropagation();'>
+          </toolbarbutton>
         </div>
-        <toolbarbutton class="textbox-presentation-segment-numbutton" onclick='_onButton(true);event.stopPropagation();' >+</toolbarbutton>
       </div>
       `;
     }
@@ -625,7 +627,7 @@
       var l = this.parentNode.scrollLeftMax;
       this._labelValue.value = plus ? parseInt(this._labelValue.value) + 1 : parseInt(this._labelValue.value) - 1;
       this._value = this._labelKey.value + this._labelValue.value;
-      if (plus && this.parentNode.scrollLeftMax > l) this.parentNode.scrollLeft += (this.parentNode.scrollLeftMax - l);
+      this.parentNode.scrollLeft += (this.parentNode.scrollLeftMax - l);
       this.closest('advancedlocationbar')._updateHref();
       this.closest('advancedlocationbar')._noSync = true;
       gURLBar.value = this.closest('advancedlocationbar').pathFileNodeF.href;
