@@ -106,10 +106,10 @@
             return;
         this.removeAttribute("linkify");
         this._mouseover = false;
-        if (!this._focused && this.plain) {
+        if (/* !this._focused && */ this.plain) {
           this.prettyView();
           document.removeEventListener("keydown", this, false);
-        } else
+        } /* else */
           gURLBar._updateUrlTooltip();
       });
 
