@@ -25,6 +25,7 @@ advancedlocationbar label {
 .textbox-presentation-searchParam[numeric] > .textbox-presentation-segment-numbox:hover {
   border: 1px solid;
   position: relative;
+  margin-left: -1px;
   margin-right: calc(-2ch - 1px);
   background: transparent;
   text-decoration: underline;
