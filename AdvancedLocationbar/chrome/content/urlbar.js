@@ -110,7 +110,7 @@
           this.prettyView();
           document.removeEventListener("keydown", this, false);
         } /* else */
-          gURLBar._updateUrlTooltip();
+        gURLBar._updateUrlTooltip();
       });
 
       gURLBar.addEventListener("focus", (event) => {
@@ -131,6 +131,7 @@
         }
       }, true);
 
+      gURLBar.textbox.addEventListener("wheel", (event) => { this.on_wheel(event) });
     }
 
     connectedCallback() {
@@ -194,6 +195,12 @@
       this.fragmentNode = this.getElementsByAttribute("anonid", "fragment")[0];
 
       this._plain = true;
+
+      this._prevMouseScrolls = [null, null];
+
+      this._destination = 0;
+
+      this._direction = 0;
 
       try {
         this.overflowEllipsis.value =
@@ -485,6 +492,83 @@
 
       window.addEventListener("mousemove", onmove, false);
 
+    }
+
+    get isRTLScrollbox() {
+      if (!this._isRTLScrollbox) {
+        this._isRTLScrollbox =
+          document.defaultView.getComputedStyle(this.presentation).direction ==
+          "rtl";
+      }
+      return this._isRTLScrollbox;
+    }
+
+    scrollByPixels(aPixels, aInstant) {
+      let scrollOptions = { behavior: aInstant ? "instant" : "auto" };
+      scrollOptions["left"] = aPixels;
+      this.presentation.scrollBy(scrollOptions);
+    }
+
+    on_wheel(event) {
+      // Don't consume the event if we can't scroll.
+      if (!this.presentation.scrollLeftMax) {
+        return;
+      }
+
+      let doScroll = false;
+      let instant;
+      let scrollAmount = 0;
+
+      // We allow vertical scrolling to scroll a horizontal scrollbox
+      // because many users have a vertical scroll wheel but no
+      // horizontal support.
+      // Because of this, we need to avoid scrolling chaos on trackpads
+      // and mouse wheels that support simultaneous scrolling in both axes.
+      // We do this by scrolling only when the last two scroll events were
+      // on the same axis as the current scroll event.
+      // For diagonal scroll events we only respect the dominant axis.
+      let isVertical = Math.abs(event.deltaY) > Math.abs(event.deltaX);
+      let delta = isVertical ? event.deltaY : event.deltaX;
+      let scrollByDelta = isVertical && this.isRTLScrollbox ? -delta : delta;
+
+      if (this._prevMouseScrolls.every(prev => prev == isVertical)) {
+        doScroll = true;
+        if (event.deltaMode == event.DOM_DELTA_PIXEL) {
+          scrollAmount = scrollByDelta;
+          instant = true;
+        } else if (event.deltaMode == event.DOM_DELTA_PAGE) {
+          scrollAmount = scrollByDelta * this.presentation.clientWidth;
+        } else {
+          const elength = Array.prototype.filter.call(this.presentation.children, (el) => { return !!el.clientWidth }, this).length
+          scrollAmount = scrollByDelta * (elength && this.presentation.scrollWidth / elength);
+        }
+      }
+
+      if (this._prevMouseScrolls.length > 1) {
+        this._prevMouseScrolls.shift();
+      }
+      this._prevMouseScrolls.push(isVertical);
+
+
+      if (doScroll) {
+        let direction = scrollAmount < 0 ? -1 : 1;
+        let startPos = this.scrollPosition;
+
+        if (this._direction != direction) {
+          this._destination = startPos + scrollAmount;
+          this._direction = direction;
+        } else {
+          // We were already in the process of scrolling in this direction
+          this._destination = this._destination + scrollAmount;
+          scrollAmount = this._destination - startPos;
+        }
+        this.scrollByPixels(scrollAmount, instant);
+
+        this.inputField.scrollLeft = this.presentation.scrollLeft * this.inputField.scrollLeftMax / this.presentation.scrollLeftMax;
+      }
+
+      event.stopPropagation();
+      event.preventDefault();
     }
   }
 
