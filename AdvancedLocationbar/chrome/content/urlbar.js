@@ -131,7 +131,14 @@
         }
       }, true);
 
-      gURLBar.textbox.addEventListener("wheel", (event) => { this.on_wheel(event) });
+      this.scroll_on_mouse_wheel = this._prefsext.getBoolPref("scroll_on_mouse_wheel");;
+    }
+
+    set scroll_on_mouse_wheel(bool) {
+      bool ? gURLBar.textbox.addEventListener("wheel", (event) => { this.on_wheel(event) }) :
+        gURLBar.textbox.removeEventListener("wheel", (event) => { this.on_wheel(event) });
+
+      return bool;
     }
 
     connectedCallback() {
@@ -229,7 +236,6 @@
     }
 
     set plain(val) {
-      this.presentation.scrollLeft = this.inputField.scrollLeft;
       this._plain = val;
       if (val) {
         this.inputBoxInner.style.removeProperty("opacity");
@@ -238,6 +244,8 @@
         this.inputBoxInner.style.setProperty("opacity", "0", "important");
       this.presentationBox.style.removeProperty("opacity");
       gURLBar._updateUrlTooltip();
+      val ? this.inputField.scrollLeft = this.presentation.scrollLeft * this.inputField.scrollLeftMax / this.presentation.scrollLeftMax :
+        this.presentation.scrollLeft = this.inputField.scrollLeft * this.presentation.scrollLeftMax / this.inputField.scrollLeftMax;
       return val;
     }
 
@@ -450,6 +458,7 @@
           case "linkify_on_mouse_icon":
           case "linkify_on_mouse_top":
           case "linkify_on_mouse_bottom":
+          case "scroll_on_mouse_wheel":
             this[data] = this._prefsext.getBoolPref(data);
             break;
         }
@@ -497,23 +506,20 @@
     get isRTLScrollbox() {
       if (!this._isRTLScrollbox) {
         this._isRTLScrollbox =
-          document.defaultView.getComputedStyle(this.presentation).direction ==
+          document.defaultView.getComputedStyle(this.inputField).direction ==
           "rtl";
       }
       return this._isRTLScrollbox;
     }
 
-    scrollByPixels(aPixels, aInstant) {
-      let scrollOptions = { behavior: aInstant ? "instant" : "auto" };
-      scrollOptions["left"] = aPixels;
-      this.presentation.scrollBy(scrollOptions);
-    }
-
     on_wheel(event) {
       // Don't consume the event if we can't scroll.
-      if (!this.presentation.scrollLeftMax) {
-        return;
-      }
+      let scrolling;
+      if (this.presentation.scrollLeftMax && !this.plain) {
+        scrolling = this.presentation;
+      } else if (this.inputField.scrollLeftMax) {
+        scrolling = this.inputField;
+      } else return;
 
       let doScroll = false;
       let instant;
@@ -537,10 +543,10 @@
           scrollAmount = scrollByDelta;
           instant = true;
         } else if (event.deltaMode == event.DOM_DELTA_PAGE) {
-          scrollAmount = scrollByDelta * this.presentation.clientWidth;
+          scrollAmount = scrollByDelta * scrolling.clientWidth;
         } else {
-          const elength = Array.prototype.filter.call(this.presentation.children, (el) => { return !!el.clientWidth }, this).length
-          scrollAmount = scrollByDelta * (elength && this.presentation.scrollWidth / elength);
+          const elength = Array.prototype.filter.call(this.presentation.children, (el) => { return !!el.href }, this).length
+          scrollAmount = scrollByDelta * (elength && scrolling.scrollWidth / elength);
         }
       }
 
@@ -552,7 +558,7 @@
 
       if (doScroll) {
         let direction = scrollAmount < 0 ? -1 : 1;
-        let startPos = this.scrollPosition;
+        let startPos = scrolling.scrollLeft;
 
         if (this._direction != direction) {
           this._destination = startPos + scrollAmount;
@@ -562,9 +568,9 @@
           this._destination = this._destination + scrollAmount;
           scrollAmount = this._destination - startPos;
         }
-        this.scrollByPixels(scrollAmount, instant);
+        scrolling.scrollBy({ behavior: instant ? "instant" : "auto", left: scrollAmount })
 
-        this.inputField.scrollLeft = this.presentation.scrollLeft * this.inputField.scrollLeftMax / this.presentation.scrollLeftMax;
+        // this.inputField.scrollLeft = this.presentation.scrollLeft * this.inputField.scrollLeftMax / this.presentation.scrollLeftMax;
       }
 
       event.stopPropagation();

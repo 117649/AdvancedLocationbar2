@@ -26,5 +26,5 @@
     pref("extensions.advancedlocationbar.linkify_on_mouse_icon", true);
     pref("extensions.advancedlocationbar.linkify_on_mouse_top", false);
     pref("extensions.advancedlocationbar.linkify_on_mouse_bottom", false);
-
+    pref("extensions.advancedlocationbar.scroll_on_mouse_wheel", false);
 })()
