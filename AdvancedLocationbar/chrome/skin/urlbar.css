@@ -60,6 +60,10 @@ advancedlocationbar label {
   -moz-margin-start: 1px;
 }
 
+advancedlocationbar{
+  mask-image: linear-gradient(to left, transparent, black 3ch);
+}
+
 advancedlocationbar,
 .textbox-presentation-box {
   position: absolute;
