@@ -9,3 +9,8 @@ Please read the tips.
 ## Tips ##
 * :warning: If using Waterfox and/or bootstrapLoader the browser __must__ be restarted after installation!
   * (If using userChromeJS the startup cache may need to be cleared between updates.)
+
+## New features! ##
+* :Will segment search parameters.
+  * If parameter is pure number a spinbox would popup let you dial it up or down by 1.(this should make you filp page easier, right?)
+* :Allow scroll location bar with mouse wheel.
