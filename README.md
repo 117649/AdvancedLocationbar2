@@ -1,4 +1,4 @@
-# AdvancedLocationbar2 #
+# AdvancedLocationbar²  #
 
 Advanced Location bar for Waterfox G3 & Firefox Developer Edition (with [userChromeJS](https://github.com/xiaoxiaoflood/firefox-scripts) or [bootstrapLoader](https://github.com/xiaoxiaoflood/firefox-scripts/tree/master/extensions/bootstrapLoader)) - __[download here!](https://github.com/117649/AdvancedLocationbar/releases/latest)__
 
