@@ -37,7 +37,7 @@ function showRestartNotifcation(verb, window) {
   window.PopupNotifications.show(
     window.gBrowser.selectedBrowser,
     'addon-install-restart',
-    'Roomy Bookmarks Toolbar has been ' + verb + ', but a restart is required to ' + ((verb == 'upgraded' || verb == 'installed') || verb == 're-enabled' ? 'enable' : 'remove') + ' add-on functionality.',
+    'Advanced Locationbar has been ' + verb + ', but a restart is required to ' + ((verb == 'upgraded' || verb == 'installed') || verb == 're-enabled' ? 'enable' : 'remove') + ' add-on functionality.',
     'addons-notification-icon',
     {
       label: 'Restart Now',
