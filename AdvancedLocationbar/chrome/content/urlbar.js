@@ -351,7 +351,7 @@
       while (this.pathFileNodeQ.nextSibling != this.pathFileNodeF)
         presentation.removeChild(this.pathFileNodeQ.nextSibling);
 
-      var pathSegments = UrlbarInput.prototype._getValueFromResult('', this.uri.spec).replace(/^[^:]*:\/\/[^\/]*\//, "");
+      var pathSegments = UrlbarInput.prototype._getValueFromResult({payload:{url: this.uri.spec}}, this.uri.spec).replace(/^[^:]*:\/\/[^\/]*\//, "");
 
       var iFragment = pathSegments.indexOf("#");
       if (iFragment > -1) {
@@ -470,7 +470,7 @@
       var urlstr = this._original_getSelectedValueForClipboard.call(gURLBar);
       if (this.copy_unescaped && !gURLBar.valueIsTyped && gURLBar.selectionStart == 0 && gURLBar.selectionEnd == gURLBar.inputField.value.length) {
         try {
-          return UrlbarInput.prototype._getValueFromResult('', urlstr).replace(/[()"\s]/g, escape); // escape() doesn't encode @*_+-./
+          return UrlbarInput.prototype._getValueFromResult({payload:{url: urlstr}}, urlstr).replace(/[()"\s]/g, escape); // escape() doesn't encode @*_+-./
         } catch (e) {
           return urlstr;
         }
