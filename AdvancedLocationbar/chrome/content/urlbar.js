@@ -131,6 +131,8 @@
         }
       }, true);
 
+      this._original_getSelectedValueForClipboard = gURLBar._getSelectedValueForClipboard;
+
       this.scroll_on_mouse_wheel = this._prefsext.getBoolPref("scroll_on_mouse_wheel");;
     }
 
@@ -142,8 +144,6 @@
     }
 
     connectedCallback() {
-      this._original_getSelectedValueForClipboard = gURLBar._getSelectedValueForClipboard;
-
       if (this.delayConnectedCallback()) {
         return;
       }
@@ -271,17 +271,17 @@
     }
 
     set copy_unescaped(val) {
-      if (this._original_getSelectedValueForClipboard)
+      if (this._original_getSelectedValueForClipboard && (val != this._copy_unescaped))
         if (val)
           gURLBar._getSelectedValueForClipboard = _ => this._getSelectedValueForClipboard.call(this);
         else
           gURLBar._getSelectedValueForClipboard = this._original_getSelectedValueForClipboard;
-
+      this._copy_unescaped = val;
       return val;
     }
 
     get copy_unescaped() {
-      return this._prefsext.getBoolPref("copy_unescaped");
+      return this._copy_unescaped;
     }
 
     _syncValue() {
@@ -351,7 +351,7 @@
       while (this.pathFileNodeQ.nextSibling != this.pathFileNodeF)
         presentation.removeChild(this.pathFileNodeQ.nextSibling);
 
-      var pathSegments = UrlbarInput.prototype._getValueFromResult({payload:{url: this.uri.spec}}, this.uri.spec).replace(/^[^:]*:\/\/[^\/]*\//, "");
+      var pathSegments = UrlbarInput.prototype._getValueFromResult({ payload: { url: this.uri.spec } }, this.uri.spec).replace(/^[^:]*:\/\/[^\/]*\//, "");
 
       var iFragment = pathSegments.indexOf("#");
       if (iFragment > -1) {
@@ -470,7 +470,7 @@
       var urlstr = this._original_getSelectedValueForClipboard.call(gURLBar);
       if (this.copy_unescaped && !gURLBar.valueIsTyped && gURLBar.selectionStart == 0 && gURLBar.selectionEnd == gURLBar.inputField.value.length) {
         try {
-          return UrlbarInput.prototype._getValueFromResult({payload:{url: urlstr}}, urlstr).replace(/[()"\s]/g, escape); // escape() doesn't encode @*_+-./
+          return UrlbarInput.prototype._getValueFromResult({ payload: { url: urlstr } }, urlstr).replace(/[()"\s]/g, escape); // escape() doesn't encode @*_+-./
         } catch (e) {
           return urlstr;
         }
