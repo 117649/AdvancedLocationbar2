@@ -65,7 +65,7 @@ function showRestartNotifcation(verb, window) {
 async function install(data, reason) {
   const window = Services.wm.getMostRecentWindow('navigator:browser');
   showRestartNotifcation("installed", window);
-  (await AddonManager.getAddonByID('advancedlocationbar@veg.by')).__AddonInternal__.signedState = AddonManager.SIGNEDSTATE_NOT_REQUIRED;
+  (await AddonManager.getAddonByID(`${data.id}`)).__AddonInternal__.signedState = AddonManager.SIGNEDSTATE_NOT_REQUIRED;
   return;
 }
 
