@@ -62,19 +62,23 @@ function showRestartNotifcation(verb, window) {
   );
 }
 
-async function install(data, reason) {
+function install(data, reason) {
   const window = Services.wm.getMostRecentWindow('navigator:browser');
   showRestartNotifcation("installed", window);
-  (await AddonManager.getAddonByID(`${data.id}`)).__AddonInternal__.signedState = AddonManager.SIGNEDSTATE_NOT_REQUIRED;
   return;
 }
 
 function uninstall() { }
 
-function startup(data, reason) {
+async function startup(data, reason) {
   var temp = {};
   Services.scriptloader.loadSubScript("chrome://advancedlocationbar/content/prefs.js", temp, 'UTF-8');
   delete temp;
+
+  var signedState = (await AddonManager.getAddonByID(`${data.id}`)).__AddonInternal__.signedState 
+  Services.prefs.getBoolPref("extensions.advancedlocationbar.hide_warring") ? 
+    signedState = AddonManager.SIGNEDSTATE_NOT_REQUIRED
+    :signedState === AddonManager.SIGNEDSTATE_NOT_REQUIRED ? signedState = AddonManager.SIGNEDSTATE_MISSING:'';
 
   const window = Services.wm.getMostRecentWindow('navigator:browser');
 
