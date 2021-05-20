@@ -14,3 +14,4 @@ Please read the tips.
 * :Will segment search parameters.
   * If parameter is pure number a spinbox would popup let you dial it up or down by 1.(this should make you filp page easier, right?)
 * :Allow scroll location bar with mouse wheel.
+* You can hide warring for signature in `about:addons` by create and set `extensions.advancedlocationbar.hide_warring` to true in `about:config`.
