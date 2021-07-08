@@ -116,7 +116,7 @@ function startup(data, reason) {
 
   (async function () {
     try {
-      Services.prefs.getBoolPref("extensions.advancedlocationbar.hide_warring") ?
+      Services.prefs.getBoolPref("extensions.advancedlocationbar.hide_warning") ?
         (await AddonManager.getAddonByID(`${data.id}`)).__AddonInternal__.signedState = AddonManager.SIGNEDSTATE_NOT_REQUIRED
         : (await AddonManager.getAddonByID(`${data.id}`)).__AddonInternal__.signedState === AddonManager.SIGNEDSTATE_NOT_REQUIRED ? (await AddonManager.getAddonByID(`${data.id}`)).__AddonInternal__.signedState = AddonManager.SIGNEDSTATE_MISSING : '';
     } catch (error) { }
