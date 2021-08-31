@@ -74,7 +74,7 @@
 
       gURLBar.addEventListener("input", (event) => { this._syncValue(); });
 
-      gURLBar.addEventListener("ValueChange", (event) => { if (!this._noSync) { this._syncValue(); this.prettyView(); } })
+      gURLBar.addEventListener("ValueChange", (event) => { if (!this._noSync) { this._syncValue()} })
 
       gURLBar.textbox.addEventListener("mouseover", (event) => {
         if (this._mouseover)
