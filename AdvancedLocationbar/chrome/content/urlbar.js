@@ -74,7 +74,7 @@
 
       gURLBar.addEventListener("input", (event) => { this._syncValue(); });
 
-      gURLBar.addEventListener("ValueChange", (event) => { if (!this._noSync) { this._syncValue()} })
+      gURLBar.addEventListener("ValueChange", (event) => { if (!this._noSync) { this._syncValue() } })
 
       gURLBar.textbox.addEventListener("mouseover", (event) => {
         if (this._mouseover)
@@ -86,10 +86,14 @@
         }
         this._mouseover = true;
         var bO = this.getBoundingClientRect();
-        if (this.linkify_on_mouse_icon && this._iconWasHovered || this.linkify_on_keys && (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) ||
-          this.linkify_on_mouse_top && event.screenY < this.screenY + bO.height / 4 ||
-          this.linkify_on_mouse_bottom && event.screenY >= this.screenY + bO.height / 4)
+        if (this.linkify_on_mouse_icon &&
+          this._iconWasHovered ||
+          this.linkify_on_keys && (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) ||
+          this.linkify_on_mouse_top && event.screenY < this.inputBox.screenY + bO.height / 4 ||
+          this.linkify_on_mouse_bottom && event.screenY >= this.inputBox.screenY + bO.height / 4) {
+          this.prettyView();
           this.setAttribute("linkify", "true");
+        }
         else
           setTimeout(function (self) {
             if (self._mouseover && self.getAttribute("linkify") != "true") {
@@ -106,10 +110,10 @@
             return;
         this.removeAttribute("linkify");
         this._mouseover = false;
-        if (/* !this._focused && */ this.plain) {
+        if (!this._focused && this.plain) {
           this.prettyView();
           document.removeEventListener("keydown", this, false);
-        } /* else */
+        } else this.plain = true;
         gURLBar._updateUrlTooltip();
       });
 
