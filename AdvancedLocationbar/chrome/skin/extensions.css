@@ -858,6 +858,7 @@ setting[first-row="true"] {
 setting {
   -moz-box-align: start;
   display: inline-flex;
+  flex-shrink: 0;
 }
 
 setting > :nth-child(1){
@@ -872,6 +873,7 @@ setting > :nth-child(2){
 .preferences-alignment {
   min-height: 30px;
   -moz-box-align: center;
+  justify-content: center;
 }
 
 .preferences-description {
