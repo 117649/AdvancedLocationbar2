@@ -549,7 +549,7 @@
         } else if (event.deltaMode == event.DOM_DELTA_PAGE) {
           scrollAmount = scrollByDelta * scrolling.clientWidth;
         } else {
-          const elength = Array.prototype.filter.call(this.presentation.children, (el) => { return !!el.href }, this).length
+          const elength = [...this.presentation.querySelectorAll('label[value]')].reduce((a, c) => a + c.value.length, 0);
           scrollAmount = scrollByDelta * (elength && scrolling.scrollWidth / elength);
         }
       }
