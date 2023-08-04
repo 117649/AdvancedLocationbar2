@@ -1,5 +1,4 @@
-Components.utils.import("resource://gre/modules/Services.jsm");
-Components.utils.import("resource://gre/modules/AddonManager.jsm");
+ChromeUtils.importESModule("resource://gre/modules/AddonManager.sys.mjs");
 
 var Globals = {};
 

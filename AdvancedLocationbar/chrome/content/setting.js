@@ -7,7 +7,6 @@
 // This is loaded into all XUL windows. Wrap in a block to prevent
 // leaking to window scope.
 {
-  Components.utils.import("resource://gre/modules/Services.jsm");
 
   class Setting extends MozXULElement {
     connectedCallback() {
