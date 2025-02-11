@@ -17,7 +17,7 @@
     static get markup() {
       return `
       <html:link rel="stylesheet" href="chrome://advancedlocationbar/skin/urlbar.css"/>
-      <hbox anonid="presentation-box" class="textbox-presentation-box" flex="1" align="center" onmousedown="gURLBar.focus();" ondragover="UrlbarInput.prototype.handleEvent.call(gURLBar, event);" ondrop="UrlbarInput.prototype.handleEvent.call(gURLBar, event);">
+      <hbox anonid="presentation-box" class="textbox-presentation-box" flex="1" align="center">
         <scrollbox anonid="presentation" class="textbox-presentation" flex="1" align="center">
           <hbox is="base-segment" anonid="prePathSub" class="textbox-presentation-segment textbox-presentation-prePathSub">
             <label anonid="protocol" class="textbox-presentation-protocol"></label>
@@ -242,6 +242,9 @@
 
       this.plain = true;
 
+      this.presentationBox.addEventListener("mousedown", event => gURLBar.focus());
+      this.presentationBox.addEventListener("dragover", event => UrlbarInput.prototype.handleEvent.call(gURLBar, event));
+      this.presentationBox.addEventListener("drop", event => UrlbarInput.prototype.handleEvent.call(gURLBar, event));
     }
 
     set plain(val) {
@@ -863,9 +866,9 @@
       <div class="textbox-presentation-segment-numbox" align="center">
         <label class="textbox-presentation-segment-label" anonid="value"></label>
         <div align="center">
-          <toolbarbutton class="textbox-presentation-segment-numbutton" onclick='_onButton(true);event.stopPropagation();'>
+          <toolbarbutton class="textbox-presentation-segment-numbutton">
           </toolbarbutton>
-          <toolbarbutton class="textbox-presentation-segment-numbutton" onclick='_onButton(false);event.stopPropagation();'>
+          <toolbarbutton class="textbox-presentation-segment-numbutton">
           </toolbarbutton>
         </div>
       </div>
@@ -888,6 +891,10 @@
       this._labelKey = this.getElementsByAttribute("anonid", "key")[0];
       this._labelValue = this.getElementsByAttribute("anonid", "value")[0];
       this.value = this._value;
+
+      let b = this.getElementsByClassName("textbox-presentation-segment-numbutton");
+      b[0].addEventListener("click", event => { this._onButton(true); event.stopPropagation(); });
+      b[1].addEventListener("click", event => { this._onButton(false); event.stopPropagation(); });
     }
 
     _onButton(plus) {
