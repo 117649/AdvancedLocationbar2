@@ -10,7 +10,7 @@
   const lazy = {};
 
   ChromeUtils.defineESModuleGetters(lazy, {
-    UrlbarUtils: "resource:///modules/UrlbarUtils.sys.mjs",
+    UrlbarUtils: "moz-src:///browser/components/urlbar/UrlbarUtils.sys.mjs",
   });
 
   class AdvUrlbar extends MozXULElement {
