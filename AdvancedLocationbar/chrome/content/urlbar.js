@@ -77,11 +77,11 @@
 
       this.paramSegmentProto = node2;
 
-      gURLBar.addEventListener("input", (event) => { this._syncValue(); });
+      gURLBar.inputField.addEventListener("input", (event) => { this._syncValue(); });
 
-      gURLBar.addEventListener("ValueChange", (event) => { if (!this._noSync) { this._syncValue() } })
+      gURLBar.inputField.addEventListener("ValueChange", (event) => { if (!this._noSync) { this._syncValue() } })
 
-      gURLBar.textbox.addEventListener("mouseover", (event) => {
+      gURLBar.addEventListener("mouseover", (event) => {
         if (this._mouseover)
           return;
         if (!this.plain) {
@@ -109,7 +109,7 @@
           }, 50, this);
       });
 
-      gURLBar.textbox.addEventListener("mouseout", (event) => {
+      gURLBar.addEventListener("mouseout", (event) => {
         for (var node = event.relatedTarget; node; node = node.parentNode)
           if (node == this)
             return;
@@ -122,7 +122,7 @@
         gURLBar._updateUrlTooltip();
       });
 
-      gURLBar.addEventListener("focus", (event) => {
+      gURLBar.inputField.addEventListener("focus", (event) => {
         if (!this._focused && event.originalTarget == this.inputField) {
           this._focused = true;
           this._justFocusedFromPretty = true;
@@ -131,7 +131,7 @@
         }
       }, true);
 
-      gURLBar.addEventListener("blur", (event) => {
+      gURLBar.inputField.addEventListener("blur", (event) => {
         if (this._focused && event.originalTarget == this.inputField) {
           this._focused = false;
           this._syncValue();
@@ -146,8 +146,8 @@
     }
 
     set scroll_on_mouse_wheel(bool) {
-      bool ? gURLBar.textbox.addEventListener("wheel", (event) => { this.on_wheel(event) }) :
-        gURLBar.textbox.removeEventListener("wheel", (event) => { this.on_wheel(event) });
+      bool ? gURLBar.addEventListener("wheel", (event) => { this.on_wheel(event) }) :
+        gURLBar.removeEventListener("wheel", (event) => { this.on_wheel(event) });
 
       return bool;
     }
@@ -648,7 +648,7 @@
 
     _getSelectedValueForClipboard() {
       var urlstr = this._original_getSelectedValueForClipboard.call(gURLBar);
-      if (this.copy_unescaped && !gURLBar.valueIsTyped && gURLBar.selectionStart == 0 && gURLBar.selectionEnd == gURLBar.inputField.value.length) {
+      if (this.copy_unescaped && !gURLBar.valueIsTyped && gURLBar.inputField.selectionStart == 0 && gURLBar.inputField.selectionEnd == gURLBar.inputField.value.length) {
         try {
           return this._getValueFromResult({ payload: { url: urlstr } }, urlstr).replace(/[()"\s]/g, escape); // escape() doesn't encode @*_+-./
         } catch (e) {
