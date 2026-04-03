@@ -70,10 +70,7 @@ function install(data, reason) {
 function uninstall() { }
 
 function startup(data, reason) {
-  var temp = {};
-  Services.scriptloader.loadSubScript("chrome://advancedlocationbar/content/prefs.js", temp, 'UTF-8');
-  delete temp;
-
+  Services.scriptloader.loadSubScript("chrome://advancedlocationbar/content/prefs.js", {}, 'UTF-8');
 
   const window = Services.wm.getMostRecentWindow('navigator:browser');
 
