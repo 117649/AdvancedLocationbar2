@@ -112,21 +112,6 @@
       return this.input.value;
     }
 
-    fireEvent(eventName, funcStr) {
-      let body = funcStr || this.getAttribute(eventName);
-      if (!body)
-        return;
-
-      try {
-        let event = document.createEvent("Events");
-        event.initEvent(eventName, true, true);
-        let f = new Function("event", body);
-        f.call(this, event);
-      } catch (e) {
-        Cu.reportError(e);
-      }
-    }
-
     valueFromPreference() {
       // Should be code to set the from the preference input.value
       throw Components.Exception("No valueFromPreference implementation",
@@ -142,7 +127,6 @@
     inputChanged() {
       if (this.usePref && !this._updatingInput) {
         this.valueToPreference();
-        this.fireEvent("oninputchanged");
       }
     }
 
@@ -151,7 +135,6 @@
         this._updatingInput = true;
         try {
           this.valueFromPreference();
-          this.fireEvent("onpreferencechanged");
         } catch (e) { }
         this._updatingInput = false;
       }
@@ -166,10 +149,10 @@
           <label class="preferences-title" flex="1" inherits="text=title"></label>
         </hbox>
         <description class="preferences-description" flex="1" inherits="text=desc"></description>
-        <label class="preferences-learnmore text-link" onclick="document.getBindingParent(this).openLearnMore()"></label>
+        <label class="preferences-learnmore text-link"></label>
       </vbox>
       <hbox class="preferences-alignment">
-        <checkbox anonid="input" inherits="disabled,onlabel,offlabel,label=checkboxlabel" oncommand="inputChanged();"></checkbox>
+        <checkbox anonid="input" inherits="disabled,onlabel,offlabel,label=checkboxlabel"></checkbox>
       </hbox>
       `;
     }
@@ -192,6 +175,8 @@
       this.initializeAttributeInheritance();
       this.initialize();
 
+      this.input.addEventListener("command", () => this.inputChanged());
+      this.querySelector(".preferences-learnmore").addEventListener("click", () => this.openLearnMore());
     }
 
     set value(val) {
@@ -268,7 +253,7 @@
         <description class="preferences-description" flex="1" inherits="text=desc"></description>
       </vbox>
       <hbox class="preferences-alignment">
-        <html:input type="number" anonid="input" oninput="inputChanged();" onchange="inputChanged();" inherits="disabled,emptytext,min,max,increment,hidespinbuttons,wraparound,size"></html:input>
+        <html:input type="number" anonid="input" inherits="disabled,emptytext,min,max,increment,hidespinbuttons,wraparound,size"></html:input>
       </hbox>
       `;
     }
@@ -291,6 +276,8 @@
       this.initializeAttributeInheritance();
       this.initialize();
 
+      this.input.addEventListener("input", () => this.inputChanged());
+      this.input.addEventListener("change", () => this.inputChanged());
     }
 
     valueFromPreference() {
@@ -358,7 +345,7 @@
         <description class="preferences-description" flex="1" inherits="text=desc"></description>
       </vbox>
       <hbox class="preferences-alignment">
-        <html:input anonid="input" flex="1" oninput="inputChanged();" inherits="disabled,emptytext,type=inputtype,min,max,increment,hidespinbuttons,decimalplaces,wraparound"></html:input>
+        <html:input anonid="input" flex="1" inherits="disabled,emptytext,type=inputtype,min,max,increment,hidespinbuttons,decimalplaces,wraparound"></html:input>
       </hbox>
       `;
     }
@@ -381,6 +368,7 @@
       this.initializeAttributeInheritance();
       this.initialize();
 
+      this.input.addEventListener("input", () => this.inputChanged());
     }
 
     valueFromPreference() {
@@ -406,7 +394,7 @@
         <description class="preferences-description" flex="1" inherits="text=desc"></description>
       </vbox>
       <hbox class="preferences-alignment">
-        <html:input type="color" anonid="input" inherits="disabled" onchange="document.getBindingParent(this).inputChanged();"></html:input>
+        <html:input type="color" anonid="input" inherits="disabled"></html:input>
       </hbox>
       `;
     }
@@ -429,6 +417,7 @@
       this.initializeAttributeInheritance();
       this.initialize();
 
+      this.input.addEventListener("change", () => this.inputChanged());
     }
 
     set value(val) {
@@ -465,7 +454,7 @@
         <description class="preferences-description" flex="1" inherits="text=desc"></description>
       </vbox>
       <hbox class="preferences-alignment">
-        <button type="button" anonid="button" label="FROM-DTD.settings.path.button.label;" inherits="disabled" oncommand="showPicker();"></button>
+        <button type="button" anonid="button" label="FROM-DTD.settings.path.button.label;" inherits="disabled"></button>
         <label anonid="input" flex="1" crop="center" inherits="disabled"></label>
       </hbox>
       `;
@@ -491,6 +480,7 @@
       this.initialize();
 
       this._value = "";
+      this.getElementsByAttribute("anonid", "button")[0].addEventListener("command", () => this.showPicker());
 
     }
 
