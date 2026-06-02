@@ -146,8 +146,8 @@
     }
 
     set scroll_on_mouse_wheel(bool) {
-      bool ? gURLBar.addEventListener("wheel", (event) => { this.on_wheel(event) }) :
-        gURLBar.removeEventListener("wheel", (event) => { this.on_wheel(event) });
+      bool ? gURLBar.addEventListener("wheel", this.on_wheel) :
+        gURLBar.removeEventListener("wheel", this.on_wheel);
 
       return bool;
     }
@@ -692,7 +692,7 @@
       return this._isRTLScrollbox;
     }
 
-    on_wheel(event) {
+    on_wheel = (event) => {
       // Don't consume the event if we can't scroll.
       let scrolling;
       if (this.presentation.scrollLeftMax && !this.plain) {
