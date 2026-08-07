@@ -7,12 +7,6 @@
 // This is loaded into all XUL windows. Wrap in a block to prevent
 // leaking to window scope.
 {
-  const lazy = {};
-
-  ChromeUtils.defineESModuleGetters(lazy, {
-    UrlbarUtils: "moz-src:///browser/components/urlbar/UrlbarUtils.sys.mjs",
-  });
-
   class AdvUrlbar extends MozXULElement {
     static get markup() {
       return `
@@ -297,84 +291,13 @@
     }
 
     /**
-     * Extracts a input value from a UrlbarResult, used when filling the input
-     * field on selecting a result.
+     * Decodes a URL for display without exposing invisible characters. Firefox's
+     * equivalent helper is private to UrlbarInput.mjs.
      *
-     * Some examples:
-     *  - If the result is a bookmark keyword or dynamic, the value will be
-     *    its `input` property.
-     *  - If the result is search, the value may be `keyword` combined with
-     *    `suggestion` or `query`.
-     *  - If the result is WebExtension Omnibox, the value will be extracted
-     *    from `content`.
-     *  - For results returning URLs the value may be `urlOverride` or `url`.
-     *
-     * @param {UrlbarResult} result
-     *   The result to extract the value from.
-     * @param {string | null} urlOverride
-     *   For results normally returning a url string, this allows to override
-     *   it. A blank string may passed-in to clear the input.
-     * @returns {string} The value.
+     * @param {string} url The URL to decode.
+     * @returns {string} The decoded URL, or an empty string if parsing fails.
      */
-    _getValueFromResult(result, urlOverride = null) {
-      switch (result.type) {
-        case lazy.UrlbarUtils.RESULT_TYPE.KEYWORD:
-          return result.payload.input;
-        case lazy.UrlbarUtils.RESULT_TYPE.SEARCH: {
-          let value = "";
-          if (result.payload.keyword) {
-            value += result.payload.keyword + " ";
-          }
-          value += result.payload.suggestion || result.payload.query;
-          return value;
-        }
-        case lazy.UrlbarUtils.RESULT_TYPE.OMNIBOX:
-          return result.payload.content;
-        case lazy.UrlbarUtils.RESULT_TYPE.DYNAMIC:
-          return result.payload.input || "";
-      }
-  
-      // Always respect a set urlOverride property.
-      if (urlOverride !== null) {
-        // This returns null for the empty string, allowing callers to clear the
-        // input by passing an empty string as urlOverride.
-        let url = URL.parse(urlOverride);
-        return url ? losslessDecodeURI(url.URI) : "";
-      }
-  
-      let url = URL.parse(result.payload.url);
-      // If the url is not parsable, just return an empty string;
-      if (!url) {
-        return "";
-      }
-  
-      url = losslessDecodeURI(url.URI);
-      // If the user didn't originally type a protocol, and we generated one,
-      // trim the http protocol from the input value, as https-first may upgrade
-      // it to https, breaking user expectations.
-      let stripHttp =
-        result.heuristic &&
-        result.payload.url.startsWith("http://") &&
-        window.gBrowser.userTypedValue &&
-        ["http://", "https://", "file://"].every(
-          scheme => !window.gBrowser.userTypedValue.trim().startsWith(scheme)
-        );
-      if (!stripHttp) {
-        return url;
-      }
-      // Attempt to trim the url. If doing so results in a string that is
-      // interpreted as search (e.g. unknown single word host, or domain suffix),
-      // use the unmodified url instead. Otherwise, if the user edits the url
-      // and confirms the new value, we may transform the url into a search.
-      let trimmedUrl = lazy.UrlbarUtils.stripPrefixAndTrim(url, { stripHttp })[0];
-      let isSearch = !!UrlbarInput.prototype._getURIFixupInfo(trimmedUrl)?.keywordAsSent;
-      if (isSearch) {
-        // Although https-first might not respect the shown protocol, converting
-        // the result to a search would be more disruptive.
-        return url;
-      }
-      return trimmedUrl;
-
+    _decodeURLForDisplay(url) {
       /**
        * Decodes the given URI for displaying it in the address bar without losing
        * information, such that hitting Enter again will load the same URI.
@@ -462,6 +385,9 @@
         );
         return value;
       }
+
+      let parsedURL = URL.parse(url);
+      return parsedURL ? losslessDecodeURI(parsedURL.URI) : "";
     }
 
     _syncValue() {
@@ -531,7 +457,7 @@
       while (this.pathFileNodeQ.nextSibling != this.pathFileNodeF)
         presentation.removeChild(this.pathFileNodeQ.nextSibling);
 
-      var pathSegments = this._getValueFromResult({ payload: { url: this.uri.spec } }, this.uri.spec).replace(/^[^:]*:\/\/[^\/]*\//, "");
+      var pathSegments = this._decodeURLForDisplay(this.uri.spec).replace(/^[^:]*:\/\/[^\/]*\//, "");
 
       var iFragment = pathSegments.indexOf("#");
       if (iFragment > -1) {
@@ -650,7 +576,7 @@
       var urlstr = this._original_getSelectedValueForClipboard.call(gURLBar);
       if (this.copy_unescaped && !gURLBar.valueIsTyped && gURLBar.inputField.selectionStart == 0 && gURLBar.inputField.selectionEnd == gURLBar.inputField.value.length) {
         try {
-          return this._getValueFromResult({ payload: { url: urlstr } }, urlstr).replace(/[()"\s]/g, escape); // escape() doesn't encode @*_+-./
+          return this._decodeURLForDisplay(urlstr).replace(/[()"\s]/g, escape); // escape() doesn't encode @*_+-./
         } catch (e) {
           return urlstr;
         }
