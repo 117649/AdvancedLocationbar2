@@ -1,7 +1,5 @@
 const { AddonManager } = ChromeUtils.importESModule("resource://gre/modules/AddonManager.sys.mjs");
 
-var Globals = {};
-
 /**
  * restartApplication: Restarts the application, keeping it in
  * safe mode if it is already in safe mode.
@@ -69,6 +67,14 @@ function install(data, reason) {
 
 function uninstall() { }
 
+function loadIntoBrowserDocument(document) {
+  if (document.createXULElement &&
+    document.defaultView.location.origin + document.defaultView.location.pathname == "chrome://browser/content/browser.xhtml") {
+    Services.scriptloader.loadSubScript("chrome://advancedlocationbar/content/advancedlocationbar.js", document.defaultView);
+    Services.scriptloader.loadSubScript("chrome://advancedlocationbar/content/urlbar.js", document.defaultView);
+  }
+}
+
 function startup(data, reason) {
   Services.scriptloader.loadSubScript("chrome://advancedlocationbar/content/prefs.js", {}, 'UTF-8');
 
@@ -85,30 +91,16 @@ function startup(data, reason) {
   if (reason === ADDON_INSTALL || (reason === ADDON_ENABLE && !window.customElements.get('advancedlocationbar'))) {
     var enumerator = Services.wm.getEnumerator(null);
     while (enumerator.hasMoreElements()) {
-      var win = enumerator.getNext();
-
-      (async function (win) {
-        if (win.document.createXULElement) {
-          if (win.location.origin + win.location.pathname == "chrome://browser/content/browser.xhtml") {
-            Services.scriptloader.loadSubScript("chrome://advancedlocationbar/content/urlbar.js", win.document.defaultView);
-          }
-        }
-      })(win);
+      loadIntoBrowserDocument(enumerator.getNext().document);
     }
   }
 
-  (async function () {
-    let documentObserver = {
-      observe(document) {
-        if (document.createXULElement) {
-          if (document.defaultView.location.origin + document.defaultView.location.pathname == "chrome://browser/content/browser.xhtml") {
-            Services.scriptloader.loadSubScript("chrome://advancedlocationbar/content/urlbar.js", document.defaultView);
-          }
-        }
-      }
-    };
-    Services.obs.addObserver(documentObserver, "chrome-document-loaded");
-  })();
+  let documentObserver = {
+    observe(document) {
+      loadIntoBrowserDocument(document);
+    }
+  };
+  Services.obs.addObserver(documentObserver, "chrome-document-loaded");
 
   AddonManager.getAddonByID(data.id).then(addon => {
     Services.prefs.getBoolPref("extensions.advancedlocationbar.hide_warning") ?

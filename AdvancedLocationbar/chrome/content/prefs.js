@@ -1,16 +1,12 @@
 (function () {
+    const userBranch = Services.prefs.getBranch("");
+    const defaultBranch = Services.prefs.getDefaultBranch("");
+
     function pref(name, value) {
-      let branch = Services.prefs.getBranch("");
-      let defaultBranch = Services.prefs.getDefaultBranch("");
-      if (defaultBranch.getPrefType(name) == Components.interfaces.nsIPrefBranch.PREF_INVALID) {
-        // Only use the default branch if it doesn't already have the pref set.
-        // If there is already a pref with this value on the default branch, the
-        // extension wants to override a built-in value.
-        branch = defaultBranch;
-      } else if (defaultBranch.prefHasUserValue(name)) {
-        // If a pref already has a user-set value it proper type
-        // will be returned (not PREF_INVALID). In that case keep the user's
-        // value and overwrite the default.
+      let branch = userBranch;
+      if (defaultBranch.getPrefType(name) == Components.interfaces.nsIPrefBranch.PREF_INVALID ||
+        defaultBranch.prefHasUserValue(name)) {
+        // Define missing prefs and preserve existing user values.
         branch = defaultBranch;
       }
   
