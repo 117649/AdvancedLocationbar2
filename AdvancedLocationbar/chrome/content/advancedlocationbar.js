@@ -226,6 +226,7 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
   }
 
   disconnect() {
+    this.window.clearTimeout(this._linkifyTimeout);
     for (const [target, type, capture] of this._listeners) {
       target.removeEventListener(type, this, capture);
     }
@@ -366,7 +367,7 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
       this.view.prettyView();
       this.view.setAttribute("linkify", "true");
     } else {
-      this.window.setTimeout(() => {
+      this._linkifyTimeout = this.window.setTimeout(() => {
         if (this.view._mouseover && this.view.getAttribute("linkify") != "true") {
           this.urlbar.formatValue();
           this.view.plain = true;
@@ -474,7 +475,14 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
 
   static mount(window) {
     const input = window.document.getElementById("urlbar-input");
-    const view = window.document.createXULElement("advancedlocationbar");
+    const previous = window.document.querySelector("advancedlocationbar, .advancedlocationbar");
+    if (previous) {
+      if (previous.destroy) previous.destroy();
+      else previous.plain = true;
+      previous.remove();
+    }
+    const view = window.document.createXULElement("hbox");
+    view.classList.add("advancedlocationbar");
     input.parentNode.insertBefore(view, input.nextSibling);
     return view;
   }

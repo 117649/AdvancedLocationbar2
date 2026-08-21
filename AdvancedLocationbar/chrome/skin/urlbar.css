@@ -1,8 +1,8 @@
-advancedlocationbar:not([hidden]) {
+.advancedlocationbar:not([hidden]) {
   display: inline-block;
 }
 
-advancedlocationbar label {
+.advancedlocationbar label {
   margin-inline: unset;
 }
 
@@ -60,11 +60,11 @@ advancedlocationbar label {
   -moz-margin-start: 1px;
 }
 
-advancedlocationbar{
+.advancedlocationbar{
   mask-image: linear-gradient(to left, transparent, black 3ch);
 }
 
-advancedlocationbar,
+.advancedlocationbar,
 .textbox-presentation-box {
   position: absolute;
   height: 100%;
