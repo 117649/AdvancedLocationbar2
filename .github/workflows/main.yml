@@ -27,7 +27,7 @@ jobs:
           changelog_exist=$( [[ $(git rev-parse $previous_tag) != $(git rev-parse HEAD) ]] && echo true || echo false )
           echo "CHANGELOG_EXIST=$changelog_exist" >> $GITHUB_ENV
           date=$(date +'%Y%m%d.%H%M')
-          sed -i "s/1.2.1.7/1.2.1-$date/" AdvancedLocationbar/install.rdf
+          sed -i "s/1.2.1.8/1.2.1-$date/" AdvancedLocationbar/install.rdf
           echo "next version: $version-$date"
           echo "XPI_NAME=${{ env.XPI_NAME }}$date" >> $GITHUB_ENV
 
