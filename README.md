@@ -1,6 +1,6 @@
 # AdvancedLocationbar²  #
 
-Advanced Location bar for Waterfox G3 & Firefox Developer Edition (with [userChromeJS](https://github.com/xiaoxiaoflood/firefox-scripts) or [bootstrapLoader](https://github.com/xiaoxiaoflood/firefox-scripts/tree/master/extensions/bootstrapLoader)) - __[download here!](https://github.com/117649/AdvancedLocationbar/releases/latest)__
+Advanced Location bar for Waterfox G3 & Firefox Developer Edition (see [installation guide](https://github.com/onemen/TabMixPlus#installation)) - __[download here!](https://github.com/117649/AdvancedLocationbar/releases/latest)__
 
 Originally created by [VEG](https://veg.by/en/)
 
