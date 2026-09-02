@@ -66,7 +66,7 @@
 
       this.uri = "";
 
-      this._focused = "";
+      this._focused = this._host.urlbar.focused;
 
       this._justFocusedFromPretty = "";
 
@@ -142,7 +142,9 @@
       this._host.connect(this);
       this.copy_unescaped = this._prefsext.getBoolPref("copy_unescaped");
       this.scroll_on_mouse_wheel = this._prefsext.getBoolPref("scroll_on_mouse_wheel");
-      this.plain = true;
+      this._syncValue();
+      if (this._focused) this.plain = true;
+      else this.prettyView();
     },
 
     destroy() {
@@ -205,6 +207,7 @@
       this.uri = plan ? plan.uri : null;
       if (!plan) {
         this._contentIsCropped = false;
+        this.plain = true;
         return;
       }
 
@@ -284,7 +287,7 @@
       const separator = value.indexOf("=");
       key.value = separator > -1 ? value.substring(0, separator + 1) : value;
       number.value = separator > -1 ? value.substring(separator + 1) : "";
-      if (number.value && !Number.isNaN(+number.value)) node.setAttribute("numeric", true);
+      if (number.value && Number.isFinite(Number(number.value))) node.setAttribute("numeric", true);
       else node.removeAttribute("numeric");
     },
 

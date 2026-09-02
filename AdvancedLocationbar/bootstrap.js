@@ -35,7 +35,7 @@ function startup(data, reason) {
   Services.obs.addObserver(documentObserver, "chrome-document-loaded");
 
   AddonManager.getAddonByID(data.id).then(addon => {
-    Services.prefs.getBoolPref("extensions.advancedlocationbar.hide_warning") ?
+    Services.prefs.getBoolPref("extensions.advancedlocationbar.hide_warning", false) ?
       addon.__AddonInternal__.signedState = AddonManager.SIGNEDSTATE_NOT_REQUIRED
       : addon.__AddonInternal__.signedState = AddonManager.SIGNEDSTATE_MISSING;
     }

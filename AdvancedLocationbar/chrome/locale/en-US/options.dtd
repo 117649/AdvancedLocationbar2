@@ -1,7 +1,5 @@
 <!ENTITY copy_unescaped.label			"Copy unescaped URL">
 <!ENTITY trim_urls.label				"Hide http:// prefix from URL">
-<!ENTITY click_selects_all.label		"Click selects all">
-<!ENTITY double_click_selects_all.label	"Double-click selects all">
 <!ENTITY enable_formatting.label		"Keep highlighting on hover">
 <!ENTITY linkify_on_keys.label			"Linkify on Ctrl/Alt/Shift">
 <!ENTITY linkify_on_keys.desc			"Pressing Ctrl/Alt/Shift allows to click the linkified segments of URL.">

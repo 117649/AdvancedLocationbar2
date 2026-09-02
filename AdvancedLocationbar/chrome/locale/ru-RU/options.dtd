@@ -1,7 +1,5 @@
 <!ENTITY copy_unescaped.label			"Копировать URL в незакодированном виде">
 <!ENTITY trim_urls.label				"Скрывать префикс http:// из URL">
-<!ENTITY click_selects_all.label		"При клике выделять всё">
-<!ENTITY double_click_selects_all.label	"Двойным кликом выделять всё">
 <!ENTITY enable_formatting.label		"Оставлять подсветку при наведении">
 <!ENTITY linkify_on_keys.label			"Ссылки при Ctrl/Alt/Shift">
 <!ENTITY linkify_on_keys.desc			"Нажатие Ctrl/Alt/Shift позволяет кликать по сегментам URL как по ссылкам.">

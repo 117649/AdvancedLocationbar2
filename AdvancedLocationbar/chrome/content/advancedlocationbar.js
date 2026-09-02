@@ -119,7 +119,7 @@ AdvancedLocationbar.UrlPresentation = class UrlPresentation {
     const separator = current.indexOf("=");
     const key = separator > -1 ? current.substring(0, separator + 1) : "";
     const number = separator > -1 ? current.substring(separator + 1) : current;
-    const changedValue = key + (plus ? parseInt(number) + 1 : parseInt(number) - 1);
+    const changedValue = key + (plus ? Number(number) + 1 : Number(number) - 1);
     const { queryHref, querySegments } = this._planQuery(
       plan.file.href,
       plan.query,
@@ -207,9 +207,8 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
       [this.inputField, "ValueChange"],
       [this.inputField, "focus", true],
       [this.inputField, "blur", true],
-      [this.urlbar, "mouseover"],
-      [this.urlbar, "mouseout"],
-      [this.urlbar._identityBox, "mouseover"],
+      [this.urlbar._inputContainer, "mouseover"],
+      [this.urlbar._inputContainer, "mouseout"],
       [view.presentationBox, "mousedown"],
       [view.presentationBox, "dragover"],
       [view.presentationBox, "drop"],
@@ -218,7 +217,7 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
       this._listeners.push([target, type, capture]);
     }
     if (this._wheelEnabled) {
-      this.urlbar.addEventListener("wheel", this);
+      this.urlbar._inputContainer.addEventListener("wheel", this);
     }
     if (this._copyUnescaped) {
       this._installClipboard();
@@ -231,7 +230,7 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
       target.removeEventListener(type, this, capture);
     }
     this._listeners.length = 0;
-    this.urlbar.removeEventListener("wheel", this);
+    this.urlbar._inputContainer.removeEventListener("wheel", this);
     this.document.removeEventListener("keydown", this.view);
     this.urlbar._getSelectedValueForClipboard = this._originalClipboard;
     this.view = null;
@@ -246,15 +245,15 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
   handleEvent(event) {
     if (event.currentTarget == this.inputField) {
       this._onInputEvent(event);
-    } else if (event.currentTarget == this.urlbar) {
+    } else if (event.currentTarget == this.urlbar._inputContainer) {
       if (event.type == "mouseover") this._onMouseover(event);
       else if (event.type == "mouseout") this._onMouseout(event);
       else this._onWheel(event);
-    } else if (event.currentTarget == this.urlbar._identityBox) {
-      this.view._enterLinkifyMode();
     } else if (event.currentTarget == this.view.presentationBox) {
       if (event.type == "mousedown") this.urlbar.focus();
-      else this.window.UrlbarInput.prototype.handleEvent.call(this.urlbar, event);
+      else if (event.type == "dragover" &&
+               Services.droppedLinkHandler.canDropLink(event, true)) event.preventDefault();
+      else this.urlbar.handleEvent(event);
     } else {
       this._onSegmentEvent(event);
     }
@@ -283,9 +282,9 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
   setWheel(enabled) {
     this._wheelEnabled = enabled;
     if (enabled && this.view) {
-      this.urlbar.addEventListener("wheel", this);
+      this.urlbar._inputContainer.addEventListener("wheel", this);
     } else {
-      this.urlbar.removeEventListener("wheel", this);
+      this.urlbar._inputContainer.removeEventListener("wheel", this);
     }
     return enabled;
   }
@@ -352,18 +351,19 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
   }
 
   _onMouseover(event) {
+    if (this.view.linkify_on_mouse_icon &&
+        event.target.closest("#trust-icon-container, #identity-box")) this.view._enterLinkifyMode();
     if (this.view._mouseover) return;
+    const bounds = this.inputBox.getBoundingClientRect();
     if (!this.view.plain) {
-      const bounds = this.inputBox.getBoundingClientRect();
       if (event.screenX < this.inputBox.screenX ||
           event.screenX > this.inputBox.screenX + bounds.width) return;
     }
     this.view._mouseover = true;
-    const bounds = this.view.getBoundingClientRect();
     if (this.view.linkify_on_mouse_icon && this.view._iconWasHovered ||
         this.view.linkify_on_keys && (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) ||
         this.view.linkify_on_mouse_top && event.screenY < this.inputBox.screenY + bounds.height / 4 ||
-        this.view.linkify_on_mouse_bottom && event.screenY >= this.inputBox.screenY + bounds.height / 4) {
+        this.view.linkify_on_mouse_bottom && event.screenY >= this.inputBox.screenY + bounds.height * 3 / 4) {
       this.view.prettyView();
       this.view.setAttribute("linkify", "true");
     } else {
@@ -378,9 +378,7 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
   }
 
   _onMouseout(event) {
-    for (let node = event.relatedTarget; node; node = node.parentNode) {
-      if (node == this.view) return;
-    }
+    if (event.relatedTarget && this.urlbar._inputContainer.contains(event.relatedTarget)) return;
     this.view.removeAttribute("linkify");
     this.view._mouseover = false;
     if (!this.view._focused && this.view.plain) {
