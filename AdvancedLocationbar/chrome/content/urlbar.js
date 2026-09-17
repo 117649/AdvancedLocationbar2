@@ -339,7 +339,6 @@
             break;
         }
       }
-      this._host.forwardObserver(subject, topic, data);
     },
 
     _enterLinkifyMode() {

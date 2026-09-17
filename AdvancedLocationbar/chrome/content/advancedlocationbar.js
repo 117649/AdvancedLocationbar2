@@ -309,10 +309,6 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
     }
   }
 
-  forwardObserver(subject, topic, data) {
-    this.urlbar.observe.call(this.view, subject, topic, data);
-  }
-
   _installClipboard() {
     if (!this._originalClipboard) {
       return;
