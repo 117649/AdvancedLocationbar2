@@ -311,7 +311,7 @@
     handleEvent(aEvent) {
       switch (aEvent.type) {
         case "keydown":
-          if (this.plain && this._mouseover && !this._focused) {
+          if (this.linkify_on_keys && this.plain && this._mouseover && !this._focused) {
             switch (aEvent.keyCode) {
               case KeyEvent.DOM_VK_SHIFT:
               case KeyEvent.DOM_VK_CONTROL:

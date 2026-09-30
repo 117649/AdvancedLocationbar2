@@ -328,6 +328,7 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
   _onInputEvent(event) {
     if (event.type == "input" || event.type == "ValueChange" && !this._writing) {
       this.view._syncValue();
+      if (!this.view._focused && !this.view._mouseover) this.view.prettyView();
     } else if (event.type == "focus" && event.originalTarget == this.inputField) {
       if (!this.view._focused) {
         this.view._focused = true;
@@ -377,7 +378,7 @@ AdvancedLocationbar.FirefoxLocationbar = class FirefoxLocationbar {
     if (event.relatedTarget && this.urlbar._inputContainer.contains(event.relatedTarget)) return;
     this.view.removeAttribute("linkify");
     this.view._mouseover = false;
-    if (!this.view._focused && this.view.plain) {
+    if (!this.view._focused) {
       this.view.prettyView();
       this.document.removeEventListener("keydown", this.view);
     } else {
