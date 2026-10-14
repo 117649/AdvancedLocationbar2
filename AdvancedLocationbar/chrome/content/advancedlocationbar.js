@@ -42,6 +42,7 @@ AdvancedLocationbar.UrlPresentation = class UrlPresentation {
     let host = uri.host;
     const hasHost = Boolean(host);
     if (host) {
+      const asciiHost = uri.asciiHost.includes(":") ? "[" + uri.asciiHost + "]" : uri.asciiHost;
       try {
         const baseDomainAscii = this._tldService.getBaseDomainFromHost(host);
         const baseDomain = this._idnService.convertToDisplayIDN(baseDomainAscii);
@@ -52,9 +53,9 @@ AdvancedLocationbar.UrlPresentation = class UrlPresentation {
         }
         prePathHref += baseDomainAscii;
       } catch (error) {
-        prePathHref += uri.asciiHost;
+        prePathHref += asciiHost;
       }
-      prePathSubHref += uri.asciiHost;
+      prePathSubHref += asciiHost;
       domain = host;
       if (uri.port > -1) {
         port = ":" + uri.port;
